@@ -1,0 +1,27 @@
+{
+  "name": "FlushingToilet",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+        "$path": "src/replicatedstorage"
+    },
+
+    "ServerScriptService": {
+        "$path": "src/serverscriptservice",
+        
+        "ServerPackages": {
+          "$path": "ServerPackages"
+      }
+      },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+          "$path": "src/starterplayerscripts"
+      },
+    "StarterCharacterScripts": {
+          "$path": "src/startercharacterscripts"
+      }
+    }
+  }
+}
