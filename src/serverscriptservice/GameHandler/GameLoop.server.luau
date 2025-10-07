@@ -37,29 +37,6 @@ local function removePlayerData(player: Player)
 	InGamePlayers[player] = nil
 end
 
-local function teleportPlayer(player: Player, locationPart: BasePart)
-	if not player then
-		return
-	end
-	local char = player.Character
-	if not char then
-		return
-	end
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hrp or not humanoid or humanoid.Health <= 0 then
-		return
-	end
-	char:PivotTo(locationPart.CFrame)
-end
-
-local function createDeathConnection(player: Player, humanoid: Humanoid)
-	local connection = humanoid.Died:Connect(function()
-		removePlayerData(player)
-	end)
-	deathConnections[player] = connection
-end
-
 local function removeDeathConnections(player: Player)
 	deathConnections[player]:Disconnect()
 	deathConnections[player] = nil
@@ -69,11 +46,42 @@ local function loadGameUI(player: Player) end
 
 local function loadLobbyUI(player: Player) end
 
-local function selectRandomSpawn()
-	local spawnFolder = GameSettings.SPAWN_FOLDER
+local function selectRandomSpawn(spawnFolder)
 	if not spawnFolder then
 		return
 	end
+	local list = spawnFolder:GetChildren()
+	return list[math.random(1, #list)]
+end
+
+local function teleportToSpawn(player: Player, spawn: BasePart)
+	if not spawn then
+		return
+	end
+	local char = player.Character
+	if not char then
+		return
+	end
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	local hrp: BasePart = char:FindFirstChild("HumanoidRootPart")
+	if not humanoid or not hrp or humanoid.Health <= 0 then
+		return
+	end
+	hrp:PivotTo(spawn.CFrame)
+end
+
+local function playerLeave(player: Player)
+	removePlayerData(player)
+	removeDeathConnections(player)
+	loadLobbyUI(player)
+	teleportToSpawn(player, selectRandomSpawn(GameSettings.LOBBY_SPAWN_FOLDER))
+end
+
+local function createDeathConnection(player: Player, humanoid: Humanoid)
+	local connection = humanoid.Died:Connect(function()
+		playerLeave(player)
+	end)
+	deathConnections[player] = connection
 end
 
 local function playerJoin(player: Player)
@@ -93,18 +101,18 @@ local function playerJoin(player: Player)
 	addPlayerData(player)
 	createDeathConnection(player, humanoid)
 	loadGameUI(player)
-	-- add teleport to game spawn
-end
-
-local function playerLeave(player: Player)
-	removePlayerData(player)
-	removeDeathConnections(player)
-	loadLobbyUI(player)
-	-- add teleport to lobby
+	teleportToSpawn(player, selectRandomSpawn(GameSettings.GAME_SPAWN_FOLDER))
 end
 
 local function gatherPlayers()
-	return Players:GetPlayers() -- add functionality to detect when a player is opting out
+	local playerList = {}
+	for _, player: Player in Players:GetPlayers() do
+		if not player or not player.Character then
+			continue
+		end
+		table.insert(playerList, player)
+	end
+	return playerList -- add functionality to detect when a player is opting out
 end
 
 local function startIntermission(countTime: number?)
@@ -141,21 +149,47 @@ local function startRound(roundNumber: number)
 	task.wait(2)
 end
 
+local function startWarning()
+	print("Warning seequnce started.")
+	task.wait(3)
+end
+
+local function givePlayerReward(player: Player, roundNumber: number)
+	if not RoundBalancing[roundNumber] then
+		return
+	end
+	print("Rewarding", player.Name)
+	print("Coin Amount =", RoundBalancing[roundNumber].CoinReward)
+end
+
+local function rewardSequence(roundNumber)
+	if not RoundBalancing[roundNumber] then
+		return
+	end
+	for player, data in InGamePlayers do
+		givePlayerReward(player, roundNumber)
+	end
+end
+
 local function endRound(roundNumber: number)
 	print("Ending round " .. roundNumber)
-	DoorHandler.CloseDoor(DoorHandler.DoorKey[roundNumber], true)
-	DoorHandler.OpenDoor(DoorHandler.DoorKey[roundNumber - 1])
+	startWarning()
 	solidifyBarrier(roundNumber - 1)
-	-- function that drops all the stuff etc and clears it out. Must halt the function until everything is clear.
+	DoorHandler.OpenDoor(DoorHandler.DoorKey[roundNumber - 1], true)
 	task.wait(4)
+	DoorHandler.CloseDoor(DoorHandler.DoorKey[roundNumber], true)
 	for _, part in workspace.FallingParts:GetChildren() do
 		part:Destroy()
 	end
 end
 
-local function endGame() end
+local function endGame()
+	for player, data in InGamePlayers do
+		playerLeave(player)
+	end
+end
 
-local function cleanRound()
+local function cleanGame()
 	for player, data in InGamePlayers do
 		InGamePlayers[player] = nil
 	end
@@ -208,6 +242,12 @@ local function startLoop()
 	startIntermission() -- halts with a countdown so players can opt in etc.
 	local playerList = gatherPlayers() -- returns a list of all players who are currently opted in.
 
+	print(playerList)
+
+	if #playerList < GameSettings.MINIMUM_PLAYERS then
+		return
+	end
+
 	setupMap() -- sets up door system, resets lights, etc.
 	print("Map has been setup")
 
@@ -219,27 +259,31 @@ local function startLoop()
 
 	startRound(1) -- round starts. Loop is halted
 	endRound(1) -- round ends
+	rewardSequence(1)
 
 	print("Round 1 Done")
 
 	startRound(2) -- round starts. Loop is halted
 	endRound(2) -- round ends
+	rewardSequence(2)
 
 	print("Round 2 Done")
 
 	startRound(3) -- round starts. Loop is halted
 	endRound(3) -- round ends
+	rewardSequence(3)
 
 	print("Round 3 Done")
 
 	startRound(4) -- round starts. Loop is halted
 	endRound(4) -- round ends
+	rewardSequence(4)
 
 	print("Round 4 Done")
 
 	endGame() -- game ends, players teleported away
 	print("Game ended")
-	cleanRound() -- cleanup player data, remove any potential connections, final stop to ensure a clean slate.
+	cleanGame() -- cleanup player data, remove any potential connections, final stop to ensure a clean slate.
 	print("Game Cleaned")
 end
 

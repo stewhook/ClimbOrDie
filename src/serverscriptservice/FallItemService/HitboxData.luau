@@ -10,7 +10,16 @@ local function initializeHitboxes()
 
 	print("Initializing hitbox system...")
 	for _, hitbox in pairs(hitboxFolder:GetChildren()) do
-		if hitbox:IsA("Model") or hitbox:IsA("Part") then
+		if hitbox:IsA("Model") or hitbox:IsA("Part") or hitbox:IsA("MeshPart") then
+			if hitbox:IsA("Model") then
+				for _, stuff in hitbox:GetDescendants() do
+					if stuff:IsA("BasePart") or stuff:IsA("MeshPart") then
+						stuff.Transparency = .75
+					end
+				end
+			else
+				hitbox.Transparency = .75
+			end
 			local weightAttribute = hitbox:GetAttribute("Weight")
 			if weightAttribute and type(weightAttribute) == "number" and weightAttribute > 0 then
 				table.insert(hitboxes, {

@@ -1,9 +1,11 @@
 local HitboxData = require(script.Parent.HitboxData)
-
+local FallDetection = require(script.Parent.FallDetection)
 
 -- Get cached hitbox data from module
 local cachedHitboxes = HitboxData.getHitboxes()
 local cachedTotalWeight = HitboxData.getTotalWeight()
+
+print(cachedHitboxes)
 
 -- Function to randomly select a hitbox based on cached weights
 local function selectWeightedHitbox()
@@ -47,9 +49,19 @@ local function spawnHitbox()
 	-- Position it at the spawnpoint
 	local spawnPoint = retrieveRandomSpawn()
 	if spawnPoint then
+		clonedHitbox.Transparency = 1
 		clonedHitbox.CollisionGroup = "FallPart"
 		clonedHitbox.Parent = workspace.FallingParts
 		clonedHitbox:PivotTo(spawnPoint.CFrame)
+
+		-- Setup collision detection for this hitbox
+		-- You can customize the collision function here
+		local function onCollision(hitbox, hitObject, collisionSpeed)
+			hitbox:SetAttribute("LastImpact", tick())
+		end
+
+		FallDetection.StartFallConnection(clonedHitbox, onCollision)
+
 		print("Spawned hitbox:", selectedHitbox.Name, "at spawnpoint")
 	else
 		warn("SpawnPoint not found in workspace")

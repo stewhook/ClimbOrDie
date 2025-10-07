@@ -3,5 +3,6 @@ return {
     ROUND_TIME = 30,
     INTERMISSION_TIME = 3, -- Normally 10
     ROUND_COUNT = 3,
-    SPAWN_FOLDER = workspace.Map.Spawns,
+    GAME_SPAWN_FOLDER = workspace.Map.PlayerSpawns,
+    LOBBY_SPAWN_FOLDER = workspace.Lobby.PlayerSpawns
 }

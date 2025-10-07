@@ -1,6 +1,14 @@
+local ServerScriptService = game:GetService("ServerScriptService")
 TweenService = game:GetService("TweenService")
 
 local doorFolder = workspace.Map.Doors
+
+local function changeCollide(door, value: boolean)
+	for _, item in door:GetDescendants() do
+		if not item:IsA("BasePart") then continue end
+		item.CanCollide = value
+	end
+end
 
 local function initializeDoorData()
 	local doorData = {}
@@ -48,6 +56,9 @@ local function openDoor(door, halts)
 
 	if halts then
 		leftDoorTween.Completed:Wait()
+		changeCollide(door, false)
+	else
+		changeCollide(door, false)
 	end
 end
 
@@ -76,6 +87,7 @@ local function closeDoor(door, halts)
 	)
 	leftDoorTween:Play()
 	rightDoorTween:Play()
+	changeCollide(door, true)
 	if halts then
 		leftDoorTween.Completed:Wait()
 	end
