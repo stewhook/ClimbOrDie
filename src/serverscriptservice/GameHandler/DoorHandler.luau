@@ -1,11 +1,23 @@
-local ServerScriptService = game:GetService("ServerScriptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 TweenService = game:GetService("TweenService")
 
 local doorFolder = workspace.Map.Doors
+local doorSounds = ReplicatedStorage.Sounds.AreaSounds.DoorSounds
+
+local function playSoundAtPart(sound, part)
+	local clone = sound:Clone()
+	if clone.PlayOnRemove == false then
+		clone.PlayOnRemove = true
+	end
+	clone.Parent = part
+	clone:Destroy()
+end
 
 local function changeCollide(door, value: boolean)
 	for _, item in door:GetDescendants() do
-		if not item:IsA("BasePart") then continue end
+		if not item:IsA("BasePart") then
+			continue
+		end
 		item.CanCollide = value
 	end
 end
@@ -51,11 +63,15 @@ local function openDoor(door, halts)
 		openTweenDetails,
 		{ CFrame = doorData[door].RightDoorEndPosition }
 	)
+	playSoundAtPart(doorSounds.HydraulicStart, door.LeftDoor.PrimaryPart)
+	playSoundAtPart(doorSounds.HydraulicStart, door.RightDoor.PrimaryPart)
 	leftDoorTween:Play()
 	rightDoorTween:Play()
 
 	if halts then
 		leftDoorTween.Completed:Wait()
+		playSoundAtPart(doorSounds.HydraulicStop, door.LeftDoor.PrimaryPart)
+		playSoundAtPart(doorSounds.HydraulicStop, door.RightDoor.PrimaryPart)
 		changeCollide(door, false)
 	else
 		changeCollide(door, false)
@@ -85,11 +101,15 @@ local function closeDoor(door, halts)
 		closeTweenDetails,
 		{ CFrame = doorData[door].RightDoorStartPosition }
 	)
+	playSoundAtPart(doorSounds.HydraulicStart, door.LeftDoor.PrimaryPart)
+	playSoundAtPart(doorSounds.HydraulicStart, door.RightDoor.PrimaryPart)
 	leftDoorTween:Play()
 	rightDoorTween:Play()
 	changeCollide(door, true)
 	if halts then
 		leftDoorTween.Completed:Wait()
+		playSoundAtPart(doorSounds.HydraulicStop, door.LeftDoor.PrimaryPart)
+		playSoundAtPart(doorSounds.HydraulicStop, door.RightDoor.PrimaryPart)
 	end
 end
 

@@ -10,4 +10,5 @@ return {
 	SOCCERIMPACT = areaSounds.FallParts.SoccerImpact,
 	METALPANG = areaSounds.FallParts.MetalPang,
 	KNOCKOUT = areaSounds.Character.KnockedOut,
+	PLAYERROUNDREWARD = areaSounds.InGame.PlayerReward,
 }

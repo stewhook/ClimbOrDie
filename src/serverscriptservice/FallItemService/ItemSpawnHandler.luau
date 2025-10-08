@@ -1,6 +1,4 @@
 local HitboxData = require(script.Parent.HitboxData)
-local FallDetection = require(script.Parent.FallDetection)
-
 -- Get cached hitbox data from module
 local cachedHitboxes = HitboxData.getHitboxes()
 local cachedTotalWeight = HitboxData.getTotalWeight()
@@ -59,8 +57,6 @@ local function spawnHitbox()
 		local function onCollision(hitbox, hitObject, collisionSpeed)
 			hitbox:SetAttribute("LastImpact", tick())
 		end
-
-		FallDetection.StartFallConnection(clonedHitbox, onCollision)
 
 		print("Spawned hitbox:", selectedHitbox.Name, "at spawnpoint")
 	else

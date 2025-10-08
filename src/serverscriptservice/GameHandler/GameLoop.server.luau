@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
+local DataManager = require(ServerScriptService.DataStore.DataManager)
 local HitboxData = require(ServerScriptService.FallItemService.HitboxData)
 local ItemSpawnHandler = require(ServerScriptService.FallItemService.ItemSpawnHandler)
 local DoorHandler = require(script.Parent.DoorHandler)
@@ -14,6 +15,7 @@ local RoundBalancing = require(script.Parent.RoundBalancing)
 
 local roundEvents = ReplicatedStorage.Events.RoundManagement
 local startIntermissionEvent: RemoteEvent = roundEvents.StartIntermission
+local startRoundEvent: RemoteEvent = roundEvents.StartRound
 
 local hitboxes = HitboxData.getHitboxes()
 local totalWeight = HitboxData.getTotalWeight()
@@ -70,10 +72,37 @@ local function teleportToSpawn(player: Player, spawn: BasePart)
 	hrp:PivotTo(spawn.CFrame)
 end
 
+local function giveHighlight(player: Player)
+	local highlight = ReplicatedStorage.RoundUtils.Highlights.PlayerHighlight
+
+	local char = player.Character
+	if not char then
+		return
+	end
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not humanoid or not hrp or humanoid.Health <= 0 then
+		return
+	end
+
+	local clone = highlight:Clone()
+	clone.Parent = char
+end
+
+local function removeHighlight(player: Player)
+	local char = player.Character
+	if not char then
+		return
+	end
+
+	char:FindFirstChildOfClass("Highlight"):Destroy()
+end
+
 local function playerLeave(player: Player)
 	removePlayerData(player)
 	removeDeathConnections(player)
 	loadLobbyUI(player)
+	removeHighlight(player)
 	teleportToSpawn(player, selectRandomSpawn(GameSettings.LOBBY_SPAWN_FOLDER))
 end
 
@@ -101,6 +130,7 @@ local function playerJoin(player: Player)
 	addPlayerData(player)
 	createDeathConnection(player, humanoid)
 	loadGameUI(player)
+	giveHighlight(player)
 	teleportToSpawn(player, selectRandomSpawn(GameSettings.GAME_SPAWN_FOLDER))
 end
 
@@ -113,6 +143,31 @@ local function gatherPlayers()
 		table.insert(playerList, player)
 	end
 	return playerList -- add functionality to detect when a player is opting out
+end
+
+local function giveReward(player: Player, roundNumber: number)
+	local coinAmount = RoundBalancing[roundNumber].CoinReward
+	DataManager.incrementValue(player, "Coins", coinAmount)
+
+	local char = player.Character
+	if not char then
+		return
+	end
+
+	char:SetAttribute("RoundReward", coinAmount)
+end
+
+local function rewardSequence(roundNumber: number)
+	task.wait(1)
+
+	if not RoundBalancing[roundNumber] then
+		return
+	end
+	for player, data in InGamePlayers do
+		giveReward(player, roundNumber)
+	end
+
+	task.wait(2)
 end
 
 local function startIntermission(countTime: number?)
@@ -145,6 +200,12 @@ end
 
 local function startRound(roundNumber: number)
 	local roundData = RoundBalancing[roundNumber]
+	if not roundData then
+		return
+	end
+	for player, data in InGamePlayers do
+		startRoundEvent:FireClient(player, roundNumber)
+	end
 	ItemSpawnHandler.StartHitboxSpawnLoop(roundData.SpawnInterval, roundData.MaxItemSpawn, hitboxes, totalWeight)
 	task.wait(2)
 end
@@ -152,23 +213,6 @@ end
 local function startWarning()
 	print("Warning seequnce started.")
 	task.wait(3)
-end
-
-local function givePlayerReward(player: Player, roundNumber: number)
-	if not RoundBalancing[roundNumber] then
-		return
-	end
-	print("Rewarding", player.Name)
-	print("Coin Amount =", RoundBalancing[roundNumber].CoinReward)
-end
-
-local function rewardSequence(roundNumber)
-	if not RoundBalancing[roundNumber] then
-		return
-	end
-	for player, data in InGamePlayers do
-		givePlayerReward(player, roundNumber)
-	end
 end
 
 local function endRound(roundNumber: number)
@@ -185,6 +229,7 @@ end
 
 local function endGame()
 	for player, data in InGamePlayers do
+		DataManager.incrementValue(player, "Wins", 1)
 		playerLeave(player)
 	end
 end
