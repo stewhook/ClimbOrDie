@@ -1,6 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
 local soundFolder = ReplicatedStorage.Sounds
 local areaSounds = soundFolder.AreaSounds
+local UISounds = SoundService.UI
 
 return {
 	STONECRASH = areaSounds.FallParts.StoneImpact,
@@ -11,4 +13,5 @@ return {
 	METALPANG = areaSounds.FallParts.MetalPang,
 	KNOCKOUT = areaSounds.Character.KnockedOut,
 	PLAYERROUNDREWARD = areaSounds.InGame.PlayerReward,
+	ITEMFALLALERT = UISounds.Alerts.PartFallWarning,
 }

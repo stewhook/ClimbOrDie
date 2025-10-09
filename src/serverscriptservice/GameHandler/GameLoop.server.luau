@@ -16,6 +16,8 @@ local RoundBalancing = require(script.Parent.RoundBalancing)
 local roundEvents = ReplicatedStorage.Events.RoundManagement
 local startIntermissionEvent: RemoteEvent = roundEvents.StartIntermission
 local startRoundEvent: RemoteEvent = roundEvents.StartRound
+local gameJoinEvent: RemoteEvent = roundEvents.GameJoin
+local gameLeaveEvent: RemoteEvent = roundEvents.GameLeave
 
 local hitboxes = HitboxData.getHitboxes()
 local totalWeight = HitboxData.getTotalWeight()
@@ -99,6 +101,7 @@ local function removeHighlight(player: Player)
 end
 
 local function playerLeave(player: Player)
+	gameLeaveEvent:FireClient(player)
 	removePlayerData(player)
 	removeDeathConnections(player)
 	loadLobbyUI(player)
@@ -128,6 +131,7 @@ local function playerJoin(player: Player)
 	end
 
 	addPlayerData(player)
+	gameJoinEvent:FireClient(player, InGamePlayers[player])
 	createDeathConnection(player, humanoid)
 	loadGameUI(player)
 	giveHighlight(player)
@@ -241,7 +245,6 @@ local function cleanGame()
 end
 
 local function setupDoorStart()
-	print(DoorHandler.DoorKey)
 	for ID, door in DoorHandler.DoorKey do
 		if ID == 0 then
 			continue
@@ -286,8 +289,6 @@ local function startLoop()
 
 	startIntermission() -- halts with a countdown so players can opt in etc.
 	local playerList = gatherPlayers() -- returns a list of all players who are currently opted in.
-
-	print(playerList)
 
 	if #playerList < GameSettings.MINIMUM_PLAYERS then
 		return

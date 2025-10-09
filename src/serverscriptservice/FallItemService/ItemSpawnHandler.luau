@@ -51,14 +51,6 @@ local function spawnHitbox()
 		clonedHitbox.CollisionGroup = "FallPart"
 		clonedHitbox.Parent = workspace.FallingParts
 		clonedHitbox:PivotTo(spawnPoint.CFrame)
-
-		-- Setup collision detection for this hitbox
-		-- You can customize the collision function here
-		local function onCollision(hitbox, hitObject, collisionSpeed)
-			hitbox:SetAttribute("LastImpact", tick())
-		end
-
-		print("Spawned hitbox:", selectedHitbox.Name, "at spawnpoint")
 	else
 		warn("SpawnPoint not found in workspace")
 	end
@@ -70,13 +62,10 @@ local function startHitboxSpawnLoop(spawnInterval, totalSpawns, hitboxes, totalW
 
 	for i = 1, totalSpawns do
 		spawnHitbox()
-		print(string.format("Spawned %d/%d objects", i, totalSpawns))
 		if i < totalSpawns then
 			task.wait(spawnInterval)
 		end
 	end
-
-	print(string.format("Reached spawn limit of %d objects. Loop complete.", totalSpawns))
 end
 
 -- Start the hitbox spawning system with cached data

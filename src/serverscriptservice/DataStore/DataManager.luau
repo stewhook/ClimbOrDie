@@ -11,6 +11,22 @@ local function checkForCache(player, valueName)
 	return player:FindFirstChild("CachedData"):FindFirstChild(valueName)
 end
 
+local function checkForLeaderstat(player, valueName)
+	return player:FindFirstChild("leaderstats"):FindFirstChild(valueName)
+end
+
+local function updateLeaderstat(player: Player, valueName: string?, value)
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if not leaderstats then
+		return
+	end
+	local valueObj = leaderstats:FindFirstChild(tostring(valueName))
+	if not valueObj then
+		return
+	end
+	valueObj.Value = value
+end
+
 function module.incrementValue(player: Player, valueName: string?, value: number)
 	local profile = module.verifyProfile(player)
 	if not profile then
@@ -28,6 +44,7 @@ function module.incrementValue(player: Player, valueName: string?, value: number
 	if cache then
 		cache.Value = profile.Data[valueName]
 	end
+	updateLeaderstat(player, valueName, value)
 end
 
 function module.setValue(player: Player, valueName: string?, value: number)
@@ -68,18 +85,6 @@ function module.updateSessionData(player: Player, valueName: string?, value)
 	valueObj.Value = value
 end
 
-local function updateLeaderstat(player: Player, valueName: string?, value)
-	local leaderstats = player:FindFirstChild("leaderstats")
-	if not leaderstats then
-		return
-	end
-	local valueObj = leaderstats:FindFirstChild(tostring(valueName))
-	if not valueObj then
-		return
-	end
-	valueObj.Value = value
-end
-
 function module.createLeaderstats(player: Player)
 	local profile = module.verifyProfile(player)
 	if not profile then
@@ -90,8 +95,8 @@ function module.createLeaderstats(player: Player)
 		return
 	end
 	local clone = leaderstats:Clone()
-	updateLeaderstat(player, "Wins", profile.Data.Wins)
 	clone.Parent = player
+	updateLeaderstat(player, "Wins", profile.Data.Wins)
 	return clone
 end
 

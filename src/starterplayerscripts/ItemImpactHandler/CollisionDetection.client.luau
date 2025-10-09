@@ -27,7 +27,6 @@ end
 
 -- Function to cleanup tracking for a specific hitbox
 local function cleanupFallConnection(hitbox)
-	print("Cleaning up connections for ", hitbox.Name)
 	if trackedObjects[hitbox] then
 		if trackedObjects[hitbox].connection then
 			trackedObjects[hitbox].connection:Disconnect()
@@ -135,7 +134,6 @@ local function initializeExistingHitboxes(folder: Instance, collisionFunction)
 	for _, child in ipairs(folder:GetChildren()) do
 		local primary = getPrimaryPart(child)
 		if primary then
-			print("Setting up detection for", child.Name)
 			setupFallConnection(child, collisionFunction)
 		end
 	end
@@ -150,7 +148,6 @@ local function subscribeNewHitboxes(folder: Instance, collisionFunction)
 	local conn = folder.ChildAdded:Connect(function(child)
 		local primary = getPrimaryPart(child)
 		if primary then
-			print("Setting up detection for", child.Name)
 			setupFallConnection(child, collisionFunction)
 		end
 	end)
@@ -165,7 +162,6 @@ local fallingPartsFolder: Folder = Workspace:WaitForChild("FallingParts")
 
 local function onCollision(hitbox, _part, _deltaSpeed)
 	-- Signal impact to other client systems (e.g., ImpactDetection) via attribute
-	print("Collision Detected")
 	local soundID = hitbox:GetAttribute("SoundID")
 	if soundID then
 		SoundHandler.PlaySoundAtPart(hitbox:GetAttribute("SoundID"), hitbox)

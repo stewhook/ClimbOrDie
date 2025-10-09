@@ -105,7 +105,6 @@ end
 initParts()
 
 fallPartFolder.ChildAdded:Connect(function(hitbox)
-	print(ModelKey)
 	local ID = hitbox:GetAttribute("ID")
 	if not ID then
 		warn("Invalid ID")
