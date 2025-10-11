@@ -1,4 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayer = game:GetService("StarterPlayer")
+local RoundMusicHandler = require(StarterPlayer.StarterPlayerScripts.RoundStartService.RoundMusicHandler)
 local GameJoinFunctions = require(script.Parent.GameJoinFunctions)
 
 local gameJoinEvent: RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RoundManagement"):WaitForChild("GameJoin")
@@ -10,4 +12,5 @@ end)
 
 gameLeaveEvent.OnClientEvent:Connect(function()
     GameJoinFunctions.closeAlertListener()
+    RoundMusicHandler.CancelMusic()
 end)

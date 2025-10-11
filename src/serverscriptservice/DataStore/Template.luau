@@ -5,4 +5,8 @@ return {
 	FirstJoin = true,
 	SessionTime = os.time(),
 	PlayTime = 0,
+	Settings = {
+		OptedOut = false,
+		RoundMusic = true,
+	},
 }

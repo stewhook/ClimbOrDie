@@ -56,7 +56,7 @@ local function onCharacterAdded(player: Player, char)
 
 		if char:GetAttribute("RoundReward") then
 			-- functions begin here.
-			SoundHandler.PlaySoundAtPart("PLAYERROUNDREWARD", hrp)
+			SoundHandler.PlayUISound("PLAYERROUNDREWARD")
 			RewardFunctions.playVFX(char, char:GetAttribute("RoundReward"))
 		end
 	end))

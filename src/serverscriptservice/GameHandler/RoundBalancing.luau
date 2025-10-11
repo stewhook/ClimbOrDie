@@ -1,13 +1,13 @@
 return {
 	[1] = {
 		MaxItemSpawn = 100,
-		SpawnInterval = 0.75,
+		SpawnInterval = 0.6,
 		CoinReward = 50,
 		BarrierFolder = workspace.Map.Barriers.Round1,
 	},
 	[2] = {
 		MaxItemSpawn = 130,
-		SpawnInterval = 0.6,
+		SpawnInterval = 0.525,
 		CoinReward = 75,
 		BarrierFolder = workspace.Map.Barriers.Round2,
 	},

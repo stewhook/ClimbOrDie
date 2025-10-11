@@ -3,6 +3,7 @@ local player = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterPlayer = game:GetService("StarterPlayer")
 local TweenService = game:GetService("TweenService")
+local BasicUtils = require(StarterPlayer.StarterPlayerScripts.BasicUtilities.BasicUtils)
 local SoundHandler = require(StarterPlayer.StarterPlayerScripts.SoundHandler.SoundHandler)
 
 local activeCooldowns = {}
@@ -49,11 +50,12 @@ local function buildAlert(title: string, soundID: string)
 		end
 	end
 
-	local clone = ReplicatedStorage.UIComponents.PartAlerts.AlertTemplate:Clone()
+	local clone = ReplicatedStorage.UIComponents.RoundUtils.PartAlerts.AlertTemplate:Clone()
 	clone.AlertText.Text = tostring(title)
 
 	-- Set up animation before parenting to ensure initial size is set correctly
-	clone.Parent = player.PlayerGui.PartAlerts.Alerts
+	BasicUtils.strokeSync(clone)
+	clone.Parent = player.PlayerGui.RoundGui.PartAlerts.Alerts
 	local anim: Tween = buildAlertAnimation(clone)
 
 	-- Add to active alerts tracking (newest at the end)

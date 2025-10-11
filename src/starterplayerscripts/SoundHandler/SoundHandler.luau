@@ -35,7 +35,13 @@ local function playUISound(soundID: string)
     sound:Play()
 end
 
+local function playRandomUISound(folder)
+	local chosenSound =  folder:GetChildren()[math.random(1, #folder:GetChildren())]
+	chosenSound:Play()
+end
+
 return {
 	PlaySoundAtPart = playSoundAtPart,
     PlayUISound = playUISound,
+	PlayRandomUISound = playRandomUISound,
 }

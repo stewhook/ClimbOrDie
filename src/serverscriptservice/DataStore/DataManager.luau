@@ -33,8 +33,7 @@ function module.incrementValue(player: Player, valueName: string?, value: number
 		return
 	end
 
-	local data = profile.Data[valueName]
-	if not data then
+	if not profile.Data[valueName] then
 		return
 	end
 
@@ -44,7 +43,7 @@ function module.incrementValue(player: Player, valueName: string?, value: number
 	if cache then
 		cache.Value = profile.Data[valueName]
 	end
-	updateLeaderstat(player, valueName, value)
+	updateLeaderstat(player, valueName, profile.Data[valueName])
 end
 
 function module.setValue(player: Player, valueName: string?, value: number)
@@ -143,6 +142,19 @@ function module.isFirstJoin(player: Player)
 	if profile.Data.FirstJoin == true then
 		-- Start First Join Functions
 		profile.Data.FirstJoin = false
+	end
+end
+
+function module.syncSettings(player: Player, payload)
+	local profile = module.verifyProfile(player)
+	if not profile then
+		return
+	end
+	for name, value in payload do
+		if not profile.Data.Settings[name] then
+			continue
+		end
+		profile.Data.Settings[name] = value
 	end
 end
 

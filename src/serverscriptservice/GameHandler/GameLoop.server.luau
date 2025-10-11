@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
+local SoundService = game:GetService("SoundService")
 local DataManager = require(ServerScriptService.DataStore.DataManager)
 local HitboxData = require(ServerScriptService.FallItemService.HitboxData)
 local ItemSpawnHandler = require(ServerScriptService.FallItemService.ItemSpawnHandler)
@@ -9,6 +10,7 @@ local GameSettings = require(script.Parent.GameSettings)
 local InGamePlayers = require(script.Parent.InGamePlayers)
 
 local deathConnections = {}
+local IndexUI = {}
 
 local roundInfoFolder = ReplicatedStorage.RoundInfo
 local RoundBalancing = require(script.Parent.RoundBalancing)
@@ -18,6 +20,7 @@ local startIntermissionEvent: RemoteEvent = roundEvents.StartIntermission
 local startRoundEvent: RemoteEvent = roundEvents.StartRound
 local gameJoinEvent: RemoteEvent = roundEvents.GameJoin
 local gameLeaveEvent: RemoteEvent = roundEvents.GameLeave
+local warningEvent: RemoteEvent = roundEvents.WarningSequence
 
 local hitboxes = HitboxData.getHitboxes()
 local totalWeight = HitboxData.getTotalWeight()
@@ -46,9 +49,33 @@ local function removeDeathConnections(player: Player)
 	deathConnections[player] = nil
 end
 
-local function loadGameUI(player: Player) end
+local function createRoundUI(player: Player)
+	if IndexUI[player] then
+		return
+	end
+	if not player then
+		return
+	end
+	local playerGui = player.PlayerGui
+	if not playerGui then
+		return
+	end
+	local roundUI = ReplicatedStorage.UIComponents.RoundUtils.RoundGui:Clone()
+	IndexUI[player] = roundUI
+	roundUI.Parent = playerGui
+	return playerGui
+end
 
-local function loadLobbyUI(player: Player) end
+local function removeRoundUI(player: Player)
+	if not player then
+		return
+	end
+	if not IndexUI[player] then
+		return
+	end
+	IndexUI[player]:Destroy()
+	IndexUI[player] = nil
+end
 
 local function selectRandomSpawn(spawnFolder)
 	if not spawnFolder then
@@ -100,13 +127,46 @@ local function removeHighlight(player: Player)
 	char:FindFirstChildOfClass("Highlight"):Destroy()
 end
 
+local function getSessionData(player: Player)
+	return player:FindFirstChild("SessionData")
+end
+
+local function addPlayerToCache(player: Player)
+	local cacheFolder = ReplicatedStorage.Caches.GamePlayers
+	if not player or not cacheFolder then
+		return
+	end
+	if cacheFolder:FindFirstChild(tostring(player.UserId)) then
+		return cacheFolder:FindFirstChild(tostring(player.UserId))
+	end
+	local boolVal = Instance.new("BoolValue")
+	boolVal.Name = player.UserId
+	boolVal.Value = true
+	boolVal.Parent = cacheFolder
+	return boolVal
+end
+
+local function removePlayerFromCache(player: Player)
+	local boolVal = ReplicatedStorage.Caches.GamePlayers:FindFirstChild(tostring(player.UserId))
+	if not boolVal then
+		return
+	end
+	boolVal:Destroy()
+end
+
 local function playerLeave(player: Player)
+	print("Player Leave Function Running")
 	gameLeaveEvent:FireClient(player)
 	removePlayerData(player)
 	removeDeathConnections(player)
-	loadLobbyUI(player)
 	removeHighlight(player)
 	teleportToSpawn(player, selectRandomSpawn(GameSettings.LOBBY_SPAWN_FOLDER))
+	removeRoundUI(player)
+	removePlayerFromCache(player)
+	local sessionData = getSessionData(player)
+	if sessionData and sessionData:FindFirstChild("InGame") then
+		sessionData:FindFirstChild("InGame").Value = false
+	end
 end
 
 local function createDeathConnection(player: Player, humanoid: Humanoid)
@@ -133,9 +193,15 @@ local function playerJoin(player: Player)
 	addPlayerData(player)
 	gameJoinEvent:FireClient(player, InGamePlayers[player])
 	createDeathConnection(player, humanoid)
-	loadGameUI(player)
 	giveHighlight(player)
 	teleportToSpawn(player, selectRandomSpawn(GameSettings.GAME_SPAWN_FOLDER))
+	addPlayerToCache(player)
+	createRoundUI(player)
+
+	local sessionData = getSessionData(player)
+	if sessionData and sessionData:FindFirstChild("InGame") then
+		sessionData:FindFirstChild("InGame").Value = true
+	end
 end
 
 local function gatherPlayers()
@@ -207,8 +273,13 @@ local function startRound(roundNumber: number)
 	if not roundData then
 		return
 	end
+
+	local setupData = {
+		SongChoice = math.random(1, #SoundService.InGame.RoundMusic:GetChildren()),
+	}
+
 	for player, data in InGamePlayers do
-		startRoundEvent:FireClient(player, roundNumber)
+		startRoundEvent:FireClient(player, roundNumber, setupData)
 	end
 	ItemSpawnHandler.StartHitboxSpawnLoop(roundData.SpawnInterval, roundData.MaxItemSpawn, hitboxes, totalWeight)
 	task.wait(2)
@@ -216,7 +287,9 @@ end
 
 local function startWarning()
 	print("Warning seequnce started.")
+	roundInfoFolder.WarningSequence.Value = true
 	task.wait(3)
+	roundInfoFolder.WarningSequence.Value = false
 end
 
 local function endRound(roundNumber: number)
@@ -278,6 +351,10 @@ local function unlockPlayers(playerList: { Player })
 	end
 end
 
+local function startGame()
+	roundInfoFolder.RoundActive.Value = true
+end
+
 local function startLoop()
 	while script.Parent do
 		local elligible = checkForMinimumPlayers()
@@ -295,42 +372,31 @@ local function startLoop()
 	end
 
 	setupMap() -- sets up door system, resets lights, etc.
-	print("Map has been setup")
 
 	for _, player in playerList do
 		playerJoin(player)
 	end
 
-	print("Players joined")
+	startGame()
 
 	startRound(1) -- round starts. Loop is halted
 	endRound(1) -- round ends
 	rewardSequence(1)
 
-	print("Round 1 Done")
-
 	startRound(2) -- round starts. Loop is halted
 	endRound(2) -- round ends
 	rewardSequence(2)
-
-	print("Round 2 Done")
 
 	startRound(3) -- round starts. Loop is halted
 	endRound(3) -- round ends
 	rewardSequence(3)
 
-	print("Round 3 Done")
-
 	startRound(4) -- round starts. Loop is halted
 	endRound(4) -- round ends
 	rewardSequence(4)
 
-	print("Round 4 Done")
-
 	endGame() -- game ends, players teleported away
-	print("Game ended")
 	cleanGame() -- cleanup player data, remove any potential connections, final stop to ensure a clean slate.
-	print("Game Cleaned")
 end
 
 while script.Parent do
