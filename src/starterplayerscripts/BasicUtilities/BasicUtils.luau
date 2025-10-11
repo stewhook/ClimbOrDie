@@ -1,7 +1,23 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
+local baseServerTime = workspace:GetServerTimeNow()
+local baseLocalClock = os.clock()
+
 local module = {}
+
+local function syncTimeManager()
+	while script.Parent do
+		task.wait(45)
+		baseServerTime = workspace:GetServerTimeNow()
+		baseLocalClock = os.clock()
+	end
+end
+
+function module.GetServerTime()
+	task.spawn(syncTimeManager)
+	return baseServerTime + (os.clock() - baseLocalClock)
+end
 
 function module.IsInGame()
 	local gameObj = player:FindFirstChild("SessionData"):WaitForChild("InGame")

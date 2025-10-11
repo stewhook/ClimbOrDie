@@ -1,5 +1,5 @@
 return {
-	MINIMUM_PLAYERS = 1, -- Normally 2
+	MINIMUM_PLAYERS = 3, -- Normally 2
 	ROUND_TIME = 30,
 	INTERMISSION_TIME = 3, -- Normally 10
 	ROUND_COUNT = 3,
