@@ -1,6 +1,7 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StarterPlayer = game:GetService("StarterPlayer")
-local RoundMusicHandler = require(StarterPlayer.StarterPlayerScripts.RoundStartService.RoundMusicHandler)
+local RoundMusicHandler = require(player.PlayerScripts.RoundStartService.RoundMusicHandler)
 local GameJoinFunctions = require(script.Parent.GameJoinFunctions)
 
 local gameJoinEvent: RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RoundManagement"):WaitForChild("GameJoin")

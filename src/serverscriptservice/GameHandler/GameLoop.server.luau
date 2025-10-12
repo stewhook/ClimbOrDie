@@ -36,7 +36,7 @@ local function checkForMinimumPlayers()
 end
 
 local function addPlayerData(player: Player)
-	local dataPayload = true
+	local dataPayload = true -- change this later
 	InGamePlayers[player] = dataPayload
 end
 
@@ -274,6 +274,9 @@ local function startRound(roundNumber: number)
 		return
 	end
 
+	roundInfoFolder.RoundActive.Value = true
+	roundInfoFolder.CurrentRound.Value = roundNumber
+
 	local setupData = {
 		SongChoice = math.random(1, #SoundService.InGame.RoundMusic:GetChildren()),
 	}
@@ -294,6 +297,7 @@ end
 
 local function endRound(roundNumber: number)
 	print("Ending round " .. roundNumber)
+	roundInfoFolder.RoundActive.Value = false
 	startWarning()
 	solidifyBarrier(roundNumber - 1)
 	DoorHandler.OpenDoor(DoorHandler.DoorKey[roundNumber - 1], true)
@@ -304,17 +308,25 @@ local function endRound(roundNumber: number)
 	end
 end
 
+local function resetRoundInfo()
+	roundInfoFolder.RoundActive.Value = false
+	roundInfoFolder.CurrentRound.Value = 0
+end
+
+local function cleanGame()
+	resetRoundInfo()
+
+	for player, data in InGamePlayers do
+		InGamePlayers[player] = nil
+	end
+end
+
 local function endGame()
 	for player, data in InGamePlayers do
 		DataManager.incrementValue(player, "Wins", 1)
 		playerLeave(player)
 	end
-end
-
-local function cleanGame()
-	for player, data in InGamePlayers do
-		InGamePlayers[player] = nil
-	end
+	cleanGame() -- cleanup player data, remove any potential connections, final stop to ensure a clean slate, reset round info.
 end
 
 local function setupDoorStart()
@@ -351,14 +363,34 @@ local function unlockPlayers(playerList: { Player })
 	end
 end
 
-local function startGame()
-	roundInfoFolder.RoundActive.Value = true
+local function initRoundInfo()
+	roundInfoFolder.MaxRounds.Value = GameSettings.ROUND_COUNT
+end
+
+local function startGame(playerList)
+	initRoundInfo()
+	for _, player in playerList do
+		playerJoin(player)
+	end
+end
+
+local function checkToContinue()
+	local index = 0
+	for player, data in InGamePlayers do
+		index += 1
+	end
+
+	if index <= 0 then
+		endGame()
+		return false
+	else
+		return true
+	end
 end
 
 local function startLoop()
 	while script.Parent do
-		local elligible = checkForMinimumPlayers()
-		if elligible then
+		if checkForMinimumPlayers() then
 			break
 		end
 		task.wait(0.5)
@@ -373,30 +405,37 @@ local function startLoop()
 
 	setupMap() -- sets up door system, resets lights, etc.
 
-	for _, player in playerList do
-		playerJoin(player)
-	end
-
-	startGame()
+	startGame(playerList) -- teleports players in and runs init functions for them.
 
 	startRound(1) -- round starts. Loop is halted
 	endRound(1) -- round ends
 	rewardSequence(1)
 
+	if checkToContinue() == false then
+		return
+	end
+
 	startRound(2) -- round starts. Loop is halted
 	endRound(2) -- round ends
 	rewardSequence(2)
 
+	if checkToContinue() == false then
+		return
+	end
+
 	startRound(3) -- round starts. Loop is halted
 	endRound(3) -- round ends
 	rewardSequence(3)
+
+	if checkToContinue() == false then
+		return
+	end
 
 	startRound(4) -- round starts. Loop is halted
 	endRound(4) -- round ends
 	rewardSequence(4)
 
 	endGame() -- game ends, players teleported away
-	cleanGame() -- cleanup player data, remove any potential connections, final stop to ensure a clean slate.
 end
 
 while script.Parent do

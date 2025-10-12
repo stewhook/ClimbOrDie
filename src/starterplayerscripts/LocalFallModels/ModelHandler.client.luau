@@ -7,9 +7,9 @@ local localModels: Folder = Workspace.LocalModels
 local modelIndex = {}
 
 fallPartFolder.ChildRemoved:Connect(function(hitbox)
-    if modelIndex[hitbox] then
-        modelIndex[hitbox]:Destroy()
-    end
+	if modelIndex[hitbox] then
+		modelIndex[hitbox]:Destroy()
+	end
 end)
 
 local function weldParts(part0, part1)
@@ -20,9 +20,7 @@ local function weldParts(part0, part1)
 	return weld
 end
 
-local function weldToModel(hitbox, model)
-    
-end
+local function weldToModel(hitbox, model) end
 
 local function buildModelAtHitbox(hitbox: Part, model)
 	if not hitbox then
@@ -36,6 +34,10 @@ local function buildModelAtHitbox(hitbox: Part, model)
 
 	-- Clone the model/part
 	local clone = model:Clone()
+	if hitbox:GetAttribute("Custom") then
+		clone:SetAttribute("Custom", hitbox:GetAttribute("Custom"))
+		print(clone:GetAttribute("Custom"))
+	end
 	clone.Parent = localModels
 
 	-- Determine target CFrame and the anchor part to weld to
@@ -83,7 +85,7 @@ local function buildModelAtHitbox(hitbox: Part, model)
 		warn("Unsupported model type:", clone.ClassName)
 	end
 
-    modelIndex[hitbox] = clone
+	modelIndex[hitbox] = clone
 end
 
 local function initParts()

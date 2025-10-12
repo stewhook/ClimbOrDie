@@ -3,21 +3,30 @@ local HitboxData = require(script.Parent.HitboxData)
 local cachedHitboxes = HitboxData.getHitboxes()
 local cachedTotalWeight = HitboxData.getTotalWeight()
 
-print(cachedHitboxes)
+-- Spawn system state
+local spawnSystemState = {
+	isRunning = false,
+	currentSpawns = 0,
+	maxSpawns = 0,
+	spawnInterval = 0.25,
+	hitboxes = cachedHitboxes,
+	totalWeight = cachedTotalWeight,
+	customSpawnQueue = {},
+}
 
--- Function to randomly select a hitbox based on cached weights
-local function selectWeightedHitbox()
-	if #cachedHitboxes == 0 then
-		warn("No hitboxes found with valid Weight attributes")
+-- Function to randomly select a hitbox based on weights from a given hitbox list
+local function selectWeightedHitbox(hitboxList, totalWeight)
+	if not hitboxList or #hitboxList == 0 then
+		warn("No hitboxes provided for selection")
 		return nil
 	end
 
 	-- Generate random number between 0 and totalWeight
-	local randomValue = math.random() * cachedTotalWeight
+	local randomValue = math.random() * totalWeight
 
 	-- Find the selected hitbox
 	local currentWeight = 0
-	for _, hitbox in pairs(cachedHitboxes) do
+	for _, hitbox in pairs(hitboxList) do
 		currentWeight = currentWeight + hitbox.weight
 		if randomValue <= currentWeight then
 			return hitbox.object
@@ -25,7 +34,7 @@ local function selectWeightedHitbox()
 	end
 
 	-- Fallback to first hitbox (shouldn't happen)
-	return cachedHitboxes[1].object
+	return hitboxList[1].object
 end
 
 local function retrieveRandomSpawn()
@@ -33,8 +42,12 @@ local function retrieveRandomSpawn()
 end
 
 -- Function to spawn hitbox at spawnpoint
-local function spawnHitbox()
-	local selectedHitbox = selectWeightedHitbox()
+local function spawnHitbox(useCustomHitboxList, customHitboxes, customTotalWeight, sender)
+	sender = sender or nil
+	local hitboxList = useCustomHitboxList and customHitboxes or spawnSystemState.hitboxes
+	local totalWeight = useCustomHitboxList and customTotalWeight or spawnSystemState.totalWeight
+
+	local selectedHitbox = selectWeightedHitbox(hitboxList, totalWeight)
 
 	if not selectedHitbox then
 		warn("No hitbox selected for spawning")
@@ -47,6 +60,10 @@ local function spawnHitbox()
 	-- Position it at the spawnpoint
 	local spawnPoint = retrieveRandomSpawn()
 	if spawnPoint then
+		if useCustomHitboxList then
+			clonedHitbox:SetAttribute("Custom", sender.UserId)
+		end
+
 		clonedHitbox.Transparency = 1
 		clonedHitbox.CollisionGroup = "FallPart"
 		clonedHitbox.Parent = workspace.FallingParts
@@ -56,22 +73,134 @@ local function spawnHitbox()
 	end
 end
 
-local function startHitboxSpawnLoop(spawnInterval, totalSpawns, hitboxes, totalWeight)
-	spawnInterval = spawnInterval or 0.25 -- seconds between spawns
-	totalSpawns = totalSpawns or 10 -- default total spawns if not specified
+-- Main spawn loop that runs continuously
+local function spawnLoop()
+	while spawnSystemState.isRunning do
+		-- Check for custom spawns in queue first (priority)
+		if #spawnSystemState.customSpawnQueue > 0 then
+			local customSpawn = table.remove(spawnSystemState.customSpawnQueue, 1)
 
-	for i = 1, totalSpawns do
-		spawnHitbox()
-		if i < totalSpawns then
-			task.wait(spawnInterval)
+			-- Increase max spawns to accommodate the custom spawns
+			spawnSystemState.maxSpawns = spawnSystemState.maxSpawns + customSpawn.count
+
+			-- Determine the delay to use for this batch
+			local delayToUse = customSpawn.spawnDelay or spawnSystemState.spawnInterval
+
+			-- Spawn all items in this custom spawn batch
+			for i = 1, customSpawn.count do
+				spawnHitbox(true, customSpawn.hitboxes, customSpawn.totalWeight, customSpawn.sender)
+				spawnSystemState.currentSpawns = spawnSystemState.currentSpawns + 1
+
+				-- Wait between spawns if not the last one
+				if i < customSpawn.count then
+					task.wait(delayToUse)
+				end
+			end
+
+			-- Don't wait after custom batch if there are more custom spawns queued
+			-- This allows rapid custom spawns to process immediately
+			if
+				#spawnSystemState.customSpawnQueue == 0
+				and spawnSystemState.currentSpawns < spawnSystemState.maxSpawns
+			then
+				task.wait(spawnSystemState.spawnInterval)
+			end
+		-- Check if we should do a regular spawn
+		elseif spawnSystemState.currentSpawns < spawnSystemState.maxSpawns then
+			-- Regular spawn
+			spawnHitbox()
+			spawnSystemState.currentSpawns = spawnSystemState.currentSpawns + 1
+
+			if spawnSystemState.currentSpawns < spawnSystemState.maxSpawns then
+				task.wait(spawnSystemState.spawnInterval)
+			end
+		else
+			-- No more spawns needed and queue is empty, exit loop
+			break
 		end
 	end
+
+	-- Reset state when done
+	spawnSystemState.isRunning = false
+	spawnSystemState.currentSpawns = 0
+	spawnSystemState.maxSpawns = 0
+	spawnSystemState.customSpawnQueue = {}
 end
 
--- Start the hitbox spawning system with cached data
--- Example: startHitboxSpawnLoop(0.25, 5, cachedHitboxes, cachedTotalWeight)
--- startHitboxSpawnLoop(0.25, 10, cachedHitboxes, cachedTotalWeight)
+-- Start the continuous hitbox spawning system
+local function startHitboxSpawnLoop(spawnInterval, totalSpawns, hitboxes, totalWeight)
+	if spawnSystemState.isRunning then
+		warn("Spawn system is already running")
+		return
+	end
+
+	-- Configure spawn system
+	spawnSystemState.spawnInterval = spawnInterval or 0.25
+	spawnSystemState.maxSpawns = totalSpawns or 10
+	spawnSystemState.hitboxes = hitboxes or cachedHitboxes
+	spawnSystemState.totalWeight = totalWeight or cachedTotalWeight
+	spawnSystemState.isRunning = true
+	spawnSystemState.currentSpawns = 0
+	spawnSystemState.customSpawnQueue = {}
+
+	-- Start the spawn loop
+	spawnLoop()
+end
+
+-- Stop the spawn system
+local function stopHitboxSpawnLoop()
+	spawnSystemState.isRunning = false
+end
+
+-- Add custom spawns to the queue
+local function addCustomSpawns(customHitboxes, spawnCount, customSpawnDelay, sender: Player)
+	if not spawnSystemState.isRunning then
+		warn("Spawn system is not running")
+		return
+	end
+
+	if not customHitboxes or #customHitboxes == 0 then
+		warn("No custom hitboxes provided")
+		return
+	end
+
+	-- Calculate total weight for custom hitboxes
+	local totalWeight = 0
+	for _, hitbox in pairs(customHitboxes) do
+		totalWeight = totalWeight + (hitbox.weight or 1)
+	end
+
+	-- Add to queue
+	local customSpawnData = {
+		hitboxes = customHitboxes,
+		totalWeight = totalWeight,
+		count = spawnCount or 1,
+		sender = sender,
+	}
+
+	-- Add custom spawn delay if provided
+	if customSpawnDelay and type(customSpawnDelay) == "number" and customSpawnDelay >= 0 then
+		customSpawnData.spawnDelay = customSpawnDelay
+	end
+
+	table.insert(spawnSystemState.customSpawnQueue, customSpawnData)
+
+end
+
+-- Get current spawn system status
+local function getSpawnSystemStatus()
+	return {
+		isRunning = spawnSystemState.isRunning,
+		currentSpawns = spawnSystemState.currentSpawns,
+		maxSpawns = spawnSystemState.maxSpawns,
+		spawnInterval = spawnSystemState.spawnInterval,
+		queuedCustomSpawns = #spawnSystemState.customSpawnQueue,
+	}
+end
 
 return {
 	StartHitboxSpawnLoop = startHitboxSpawnLoop,
+	StopHitboxSpawnLoop = stopHitboxSpawnLoop,
+	AddCustomSpawns = addCustomSpawns,
+	GetSpawnSystemStatus = getSpawnSystemStatus,
 }
