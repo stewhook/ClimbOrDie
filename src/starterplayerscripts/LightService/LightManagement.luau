@@ -92,6 +92,7 @@ local function stopWarning()
 	for _, data in lightTable do
 		data.PointLight.Color = data.OriginalColor
 		data.SpotLight.Color = data.OriginalColor
+		data.Base.Color = data.OriginalColor
 	end
 	print(activeTweens)
 end

@@ -1,4 +1,5 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -15,14 +16,21 @@ local currentStore = GetStoreName()
 
 local PlayerStore = ProfileStore.New(currentStore, Template)
 
+local function declareLoaded(player: Player)
+	local declaration = Instance.new("BoolValue")
+	declaration.Name = player.UserId
+	declaration.Parent = ReplicatedStorage.Caches.LoadedPlayers
+end
+
 -- Add leaderstats and synchronize data locally.
-local function initialize(player: Player, profile)
+local function initialize(player: Player)
     -- create cache and leaderstats.
     DataManager.isFirstJoin(player)
     DataManager.createLeaderstats(player)
     DataManager.createPlayerCache(player)
     DataManager.createSessionData(player)
     DataManager.updateSessionData(player, "JoinTime", os.time())
+	print(DataManager.Profiles[player].Data)
 end
 
 -- Creates and stores profile
@@ -46,8 +54,9 @@ local function playerAdded(player:Player)
 		if player.Parent == Players then
 			
 			DataManager.Profiles[player] = profile
-			initialize(player, profile)
-			
+			initialize(player)
+			declareLoaded(player)
+
 		else
 			profile:EndSession()
 		end

@@ -4,7 +4,20 @@ local module = {}
 module.Profiles = {}
 
 function module.verifyProfile(player: Player)
-	return module.Profiles[player]
+	if module.Profiles[player] ~= nil then
+		return module.Profiles[player]
+	end
+	while module.Profiles[player] == nil do
+		task.wait(0.05)
+		if module.Profiles[player] ~= nil then
+			return module.Profiles[player]
+		end
+	end
+	return
+end
+
+function module.retrieveCache(player: Player)
+	return player:FindFirstChild("CachedData")
 end
 
 local function checkForCache(player, valueName)
@@ -33,7 +46,7 @@ function module.incrementValue(player: Player, valueName: string?, value: number
 		return
 	end
 
-	if not profile.Data[valueName] then
+	if profile.Data[valueName] == nil then
 		return
 	end
 
@@ -53,11 +66,17 @@ function module.setValue(player: Player, valueName: string?, value: number)
 	end
 
 	local data = profile.Data[valueName]
-	if not data then
+	if data == nil then
 		return
 	end
 
 	profile.Data[valueName] = value
+
+	local cache = checkForCache(player, valueName)
+	if cache then
+		cache.Value = profile.Data[valueName]
+	end
+	updateLeaderstat(player, valueName, profile.Data[valueName])
 end
 
 function module.updateCache(player: Player, valueName: string?, value)

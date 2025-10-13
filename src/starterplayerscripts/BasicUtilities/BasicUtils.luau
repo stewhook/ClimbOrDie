@@ -28,7 +28,7 @@ function module.IsInGame()
 end
 
 local function calcStroke()
-	return workspace.CurrentCamera.ViewportSize.X / 1920
+	return workspace.CurrentCamera.ViewportSize.Y / 1080
 end
 
 function module.strokeSync(father: Instance)

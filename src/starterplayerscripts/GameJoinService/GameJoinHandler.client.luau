@@ -9,9 +9,11 @@ local gameLeaveEvent: RemoteEvent = ReplicatedStorage:WaitForChild("Events"):Wai
 
 gameJoinEvent.OnClientEvent:Connect(function(payload)
     GameJoinFunctions.beginAlertListener()
+    GameJoinFunctions.initGameUI()
 end)
 
 gameLeaveEvent.OnClientEvent:Connect(function()
     GameJoinFunctions.closeAlertListener()
     RoundMusicHandler.CancelMusic()
+    GameJoinFunctions.initLobbyUI()
 end)

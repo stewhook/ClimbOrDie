@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local SoundService = game:GetService("SoundService")
+local Workspace = game:GetService("Workspace")
 local DataManager = require(ServerScriptService.DataStore.DataManager)
 local HitboxData = require(ServerScriptService.FallItemService.HitboxData)
 local ItemSpawnHandler = require(ServerScriptService.FallItemService.ItemSpawnHandler)
@@ -27,8 +28,23 @@ local totalWeight = HitboxData.getTotalWeight()
 
 local mapFolder = workspace.Map
 
+local function isOptedOut(player)
+	local profile = DataManager.verifyProfile(player)
+	if not profile then
+		return false
+	end
+	return profile.Data.OptedOut
+end
+
 local function checkForMinimumPlayers()
-	if #Players:GetChildren() >= GameSettings.MINIMUM_PLAYERS then
+	local elligiblePlayers = 0
+	for _, player in Players:GetPlayers() do
+		if not isOptedOut(player) then
+			print("Player Elligible")
+			elligiblePlayers += 1
+		end
+	end
+	if elligiblePlayers >= GameSettings.MINIMUM_PLAYERS then
 		return true
 	else
 		return false
@@ -180,6 +196,11 @@ local function playerJoin(player: Player)
 	if not player then
 		return
 	end
+
+	if isOptedOut(player) then
+		return
+	end
+
 	local char = player.Character
 	if not char then
 		return
@@ -207,7 +228,7 @@ end
 local function gatherPlayers()
 	local playerList = {}
 	for _, player: Player in Players:GetPlayers() do
-		if not player or not player.Character then
+		if isOptedOut(player) or not player or not player.Character then
 			continue
 		end
 		table.insert(playerList, player)
@@ -259,12 +280,38 @@ local function resetBarriers()
 	end
 end
 
+local oParams = OverlapParams.new()
+oParams.CollisionGroup = "DetectPlayers"
+local function retrieveCharInParts(folder: Instance)
+	local found = {}
+	local charList = {}
+	for _, barrier in folder:GetChildren() do
+		local list = Workspace:GetPartsInPart(barrier, oParams)
+		for _, item in list do
+			if item.Name == "HumanoidRootPart" and item.Parent:IsA("Model") then
+				if found[item.Parent] then
+					continue
+				end
+				found[item.Parent] = true
+				table.insert(charList, item.Parent)
+			end
+		end
+	end
+	return charList
+end
+
 local function solidifyBarrier(roundNumber: number)
 	if not RoundBalancing[roundNumber] then
 		return
 	end
 	for _, barrier in RoundBalancing[roundNumber].BarrierFolder:GetChildren() do
 		barrier.CollisionGroup = "SolidPartBarrier"
+	end
+	local foundChars = retrieveCharInParts(RoundBalancing[roundNumber].BarrierFolder)
+	if next(foundChars) ~= nil then
+		for _, char in foundChars do
+			char:PivotTo(GameSettings.DROP_SPOT.CFrame)
+		end
 	end
 end
 
@@ -388,6 +435,7 @@ local function checkToContinue()
 	end
 end
 
+setupMap()
 local function startLoop()
 	while script.Parent do
 		if checkForMinimumPlayers() then
