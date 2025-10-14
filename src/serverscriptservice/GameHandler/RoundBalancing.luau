@@ -1,6 +1,6 @@
 return {
 	[1] = {
-		MaxItemSpawn = 110,
+		MaxItemSpawn = 115,
 		SpawnInterval = 0.6,
 		CoinReward = 50,
 		BarrierFolder = workspace.Map.Barriers.Round1,

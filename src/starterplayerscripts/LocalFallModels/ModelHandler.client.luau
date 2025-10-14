@@ -36,7 +36,6 @@ local function buildModelAtHitbox(hitbox: Part, model)
 	local clone = model:Clone()
 	if hitbox:GetAttribute("Custom") then
 		clone:SetAttribute("Custom", hitbox:GetAttribute("Custom"))
-		print(clone:GetAttribute("Custom"))
 	end
 	clone.Parent = localModels
 

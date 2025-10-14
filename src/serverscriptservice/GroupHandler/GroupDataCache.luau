@@ -15,6 +15,7 @@ function module.SafeRetrieve(player: Player)
 			return module.Cache[player]
 		end
 	end
+	return nil
 end
 
 return module

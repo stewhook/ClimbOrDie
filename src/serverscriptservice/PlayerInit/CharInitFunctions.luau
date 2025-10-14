@@ -93,6 +93,7 @@ function module.HumanoidSetup(char: Model)
 		return
 	end
 
+	humanoid.BreakJointsOnDeath = false
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 end

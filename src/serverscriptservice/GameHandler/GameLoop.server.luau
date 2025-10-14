@@ -21,7 +21,10 @@ local startIntermissionEvent: RemoteEvent = roundEvents.StartIntermission
 local startRoundEvent: RemoteEvent = roundEvents.StartRound
 local gameJoinEvent: RemoteEvent = roundEvents.GameJoin
 local gameLeaveEvent: RemoteEvent = roundEvents.GameLeave
-local warningEvent: RemoteEvent = roundEvents.WarningSequence
+
+local bindableEvents = ReplicatedStorage.Events.BindableEvents
+local joinActiveBind: BindableEvent = bindableEvents.JoinActiveGame
+local revivePlayerBind: BindableEvent = bindableEvents.RevivePlayer
 
 local hitboxes = HitboxData.getHitboxes()
 local totalWeight = HitboxData.getTotalWeight()
@@ -192,7 +195,25 @@ local function createDeathConnection(player: Player, humanoid: Humanoid)
 	deathConnections[player] = connection
 end
 
-local function playerJoin(player: Player)
+local function grabCustomSpawn(roundNumber: number)
+	for _, spawnPart: Instance in mapFolder.CustomSpawns:GetChildren() do
+		local spawnID = spawnPart:GetAttribute("Round")
+		if not spawnID then
+			continue
+		end
+		if roundNumber == spawnID then
+			return spawnPart
+		end
+	end
+	return nil
+end
+
+local function playerJoin(player: Player, customSpawn: boolean?)
+	customSpawn = customSpawn or false
+	if roundInfoFolder.GameActive.Value ~= true then
+		return
+	end
+
 	if not player then
 		return
 	end
@@ -215,7 +236,15 @@ local function playerJoin(player: Player)
 	gameJoinEvent:FireClient(player, InGamePlayers[player])
 	createDeathConnection(player, humanoid)
 	giveHighlight(player)
-	teleportToSpawn(player, selectRandomSpawn(GameSettings.GAME_SPAWN_FOLDER))
+
+	local playerSpawn = nil
+	if customSpawn then
+		playerSpawn = grabCustomSpawn(roundInfoFolder.CurrentRound.Value)
+	else
+		playerSpawn = selectRandomSpawn(GameSettings.GAME_SPAWN_FOLDER)
+	end
+
+	teleportToSpawn(player, playerSpawn)
 	addPlayerToCache(player)
 	createRoundUI(player)
 
@@ -369,6 +398,7 @@ local function cleanGame()
 end
 
 local function endGame()
+	roundInfoFolder.GameActive.Value = false
 	for player, data in InGamePlayers do
 		DataManager.incrementValue(player, "Wins", 1)
 		playerLeave(player)
@@ -416,6 +446,7 @@ end
 
 local function startGame(playerList)
 	initRoundInfo()
+	roundInfoFolder.GameActive.Value = true
 	for _, player in playerList do
 		playerJoin(player)
 	end
@@ -485,6 +516,13 @@ local function startLoop()
 
 	endGame() -- game ends, players teleported away
 end
+
+joinActiveBind.Event:Connect(function(player: Player)
+	if roundInfoFolder.GameActive.Value ~= true then
+		return
+	end
+	playerJoin(player, true)
+end)
 
 while script.Parent do
 	startLoop()

@@ -17,4 +17,6 @@ return {
 	PLAYERROUNDREWARD = areaSounds.InGame.PlayerReward,
 	ITEMFALLALERT = UISounds.Alerts.PartFallWarning,
 	WARNINGSEQUENCE = localGameSounds.SequenceSounds.WarningSequence,
+	CARDBOARDIMPACT = areaSounds.FallParts.CardboardImpact,
+	CERAMICIMPACT = areaSounds.FallParts.CeramicImpact
 }

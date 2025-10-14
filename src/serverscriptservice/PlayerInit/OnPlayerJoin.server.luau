@@ -6,6 +6,7 @@ local PlayerInitFunctions = require(script.Parent.PlayerInitFunctions)
 
 local function characterInit(char: Model, player)
 	CharInitFunctions.CollisionGroup(char)
+	CharInitFunctions.HumanoidSetup(char)
 	CharInitFunctions.BuildTag(player, char)
 	CharInitFunctions.DetectFall(char)
 	PlayerInitFunctions.createSettingsCache(player)

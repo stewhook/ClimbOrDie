@@ -1,6 +1,6 @@
 return {
-    LARGEOBJECT = {
-        Title = "Large object incoming!",
-        Sound = "ITEMFALLALERT"
-    },
+	LARGEOBJECT = {
+		Title = "Large object incoming!",
+		Sound = "ITEMFALLALERT",
+	},
 }
