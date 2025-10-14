@@ -6,6 +6,7 @@ return {
 	SessionTime = os.time(),
 	PlayTime = 0,
 	OptedOut = false,
+	HasJoinActive = true,
 	Settings = {
 		RoundMusic = true,
 	},

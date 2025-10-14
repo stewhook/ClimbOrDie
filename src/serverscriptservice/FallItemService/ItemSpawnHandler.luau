@@ -1,4 +1,5 @@
 local HitboxData = require(script.Parent.HitboxData)
+local ServerItemFunctions = require(script.Parent.ServerItemFunctions)
 -- Get cached hitbox data from module
 local cachedHitboxes = HitboxData.getHitboxes()
 local cachedTotalWeight = HitboxData.getTotalWeight()
@@ -64,6 +65,10 @@ local function spawnHitbox(useCustomHitboxList, customHitboxes, customTotalWeigh
 			clonedHitbox:SetAttribute("Custom", sender.UserId)
 		end
 
+		if clonedHitbox:GetAttribute("Function") then
+			ServerItemFunctions.Handler(clonedHitbox, clonedHitbox:GetAttribute("Function"))
+		end
+
 		clonedHitbox.Transparency = 1
 		clonedHitbox.CollisionGroup = "FallPart"
 		clonedHitbox.Parent = workspace.FallingParts
@@ -80,8 +85,10 @@ local function spawnLoop()
 		if #spawnSystemState.customSpawnQueue > 0 then
 			local customSpawn = table.remove(spawnSystemState.customSpawnQueue, 1)
 
-			-- Increase max spawns to accommodate the custom spawns
-			spawnSystemState.maxSpawns = spawnSystemState.maxSpawns + customSpawn.count
+			-- Conditionally increase max spawns based on the increaseMaxSpawns flag
+			if customSpawn.increaseMaxSpawns then
+				spawnSystemState.maxSpawns = spawnSystemState.maxSpawns + customSpawn.count
+			end
 
 			-- Determine the delay to use for this batch
 			local delayToUse = customSpawn.spawnDelay or spawnSystemState.spawnInterval
@@ -153,7 +160,12 @@ local function stopHitboxSpawnLoop()
 end
 
 -- Add custom spawns to the queue
-local function addCustomSpawns(customHitboxes, spawnCount, customSpawnDelay, sender: Player)
+-- @param customHitboxes: Table of hitboxes to spawn
+-- @param spawnCount: Number of hitboxes to spawn
+-- @param customSpawnDelay: Optional delay between spawns (defaults to system interval)
+-- @param sender: Player who initiated the spawn
+-- @param increaseMaxSpawns: Boolean - if true, increases max spawn count; if false, uses existing slots (defaults to true for backwards compatibility)
+local function addCustomSpawns(customHitboxes, spawnCount, customSpawnDelay, sender: Player, increaseMaxSpawns)
 	if not spawnSystemState.isRunning then
 		warn("Spawn system is not running")
 		return
@@ -176,6 +188,7 @@ local function addCustomSpawns(customHitboxes, spawnCount, customSpawnDelay, sen
 		totalWeight = totalWeight,
 		count = spawnCount or 1,
 		sender = sender,
+		increaseMaxSpawns = if increaseMaxSpawns ~= nil then increaseMaxSpawns else true, -- Default to true for backwards compatibility
 	}
 
 	-- Add custom spawn delay if provided
@@ -184,7 +197,6 @@ local function addCustomSpawns(customHitboxes, spawnCount, customSpawnDelay, sen
 	end
 
 	table.insert(spawnSystemState.customSpawnQueue, customSpawnData)
-
 end
 
 -- Get current spawn system status

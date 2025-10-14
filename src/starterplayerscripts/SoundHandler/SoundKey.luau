@@ -18,5 +18,6 @@ return {
 	ITEMFALLALERT = UISounds.Alerts.PartFallWarning,
 	WARNINGSEQUENCE = localGameSounds.SequenceSounds.WarningSequence,
 	CARDBOARDIMPACT = areaSounds.FallParts.CardboardImpact,
-	CERAMICIMPACT = areaSounds.FallParts.CeramicImpact
+	CERAMICIMPACT = areaSounds.FallParts.CeramicImpact,
+	ITEMEMERGENCYALERT = UISounds.Alerts.EmergencyItem,
 }

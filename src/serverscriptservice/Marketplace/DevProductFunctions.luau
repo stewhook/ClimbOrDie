@@ -2,7 +2,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DevProductKey = require(ReplicatedStorage.StaticData.DevProductKey)
 
 local bindableEvents = ReplicatedStorage.Events.BindableEvents
-local joinActiveBind: BindableEvent = bindableEvents.JoinActiveGame
 local revivePlayerBind: BindableEvent = bindableEvents.RevivePlayer
 
 local module = {}
@@ -16,11 +15,6 @@ productFunctions[DevProductKey.Revive] = function(player: Player)
     return true
 end
 
--- Handler for JoinActive product
-productFunctions[DevProductKey.JoinActive] = function(player: Player)
-    joinActiveBind:Fire(player)
-	return true
-end
 
 -- Global handler function
 function module.Handler(player: Player, devProductId: number)

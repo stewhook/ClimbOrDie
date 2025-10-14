@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterPlayer = game:GetService("StarterPlayer")
 local TweenService = game:GetService("TweenService")
 local BasicUtils = require(StarterPlayer.StarterPlayerScripts.BasicUtilities.BasicUtils)
+local JoinGroupPrompt = require(StarterPlayer.StarterPlayerScripts.GroupManagement.JoinGroupPrompt)
 local module = {}
 
 local activeTweens = {}
@@ -91,6 +92,12 @@ function module.connectButton(model: Model)
 		end
 
 		if BasicUtils.GetServerTime() >= nextUse then
+			if buttonType == "Bomb1" then
+				if not BasicUtils.isInGroup() then
+					JoinGroupPrompt.CreatePrompt()
+					return
+				end
+			end
 			buttonPressEvent:FireServer(model, buttonType)
 		else
 			print("Cooldown")
@@ -104,6 +111,14 @@ function module.connectButton(model: Model)
 	prompt.PromptHidden:Connect(function()
 		removeHighlight(model)
 	end)
+end
+
+function module.adjustGroupDisplay(model)
+	if not BasicUtils.isInGroup() then
+		local groupUI = model:WaitForChild("Base"):FindFirstChild("GroupUI")
+		if not groupUI then return end
+		groupUI.Enabled = true
+	end
 end
 
 function module.promptDisplayHandler(model: Model)

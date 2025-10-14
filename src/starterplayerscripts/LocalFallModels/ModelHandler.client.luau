@@ -37,6 +37,9 @@ local function buildModelAtHitbox(hitbox: Part, model)
 	if hitbox:GetAttribute("Custom") then
 		clone:SetAttribute("Custom", hitbox:GetAttribute("Custom"))
 	end
+	if hitbox:GetAttribute("Function") then
+		clone:SetAttribute("Function", hitbox:GetAttribute("Function"))
+	end
 	clone.Parent = localModels
 
 	-- Determine target CFrame and the anchor part to weld to

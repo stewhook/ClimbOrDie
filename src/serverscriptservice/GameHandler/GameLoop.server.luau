@@ -21,9 +21,9 @@ local startIntermissionEvent: RemoteEvent = roundEvents.StartIntermission
 local startRoundEvent: RemoteEvent = roundEvents.StartRound
 local gameJoinEvent: RemoteEvent = roundEvents.GameJoin
 local gameLeaveEvent: RemoteEvent = roundEvents.GameLeave
+local joinActiveEvent: RemoteEvent = roundEvents.JoinActiveGame
 
 local bindableEvents = ReplicatedStorage.Events.BindableEvents
-local joinActiveBind: BindableEvent = bindableEvents.JoinActiveGame
 local revivePlayerBind: BindableEvent = bindableEvents.RevivePlayer
 
 local hitboxes = HitboxData.getHitboxes()
@@ -517,11 +517,17 @@ local function startLoop()
 	endGame() -- game ends, players teleported away
 end
 
-joinActiveBind.Event:Connect(function(player: Player)
+joinActiveEvent.OnServerEvent:Connect(function(player: Player)
 	if roundInfoFolder.GameActive.Value ~= true then
 		return
 	end
-	playerJoin(player, true)
+	local profile = DataManager.verifyProfile(player)
+	if not profile then return end
+
+	if profile.Data.HasJoinActive == true then
+		DataManager.setValue(player, "HasJoinActive", false)
+		playerJoin(player, true)	
+	end
 end)
 
 while script.Parent do

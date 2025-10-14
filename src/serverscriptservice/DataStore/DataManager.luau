@@ -59,7 +59,7 @@ function module.incrementValue(player: Player, valueName: string?, value: number
 	updateLeaderstat(player, valueName, profile.Data[valueName])
 end
 
-function module.setValue(player: Player, valueName: string?, value: number)
+function module.setValue(player: Player, valueName: string?, value)
 	local profile = module.verifyProfile(player)
 	if not profile then
 		return

@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
+local LocalGroupCache = require(player.PlayerScripts.GroupManagement.LocalGroupCache)
 
 local baseServerTime = workspace:GetServerTimeNow()
 local baseLocalClock = os.clock()
@@ -25,6 +26,10 @@ function module.IsInGame()
 		return nil
 	end
 	return gameObj.Value
+end
+
+function module.isInGroup()
+	return LocalGroupCache[player] and true or false
 end
 
 local function calcStroke()
