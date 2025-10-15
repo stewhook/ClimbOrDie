@@ -32,5 +32,3 @@ end
 
 -- Set up the callback
 MarketplaceService.ProcessReceipt = processReceipt
-
-print("Developer Product Listener initialized successfully")

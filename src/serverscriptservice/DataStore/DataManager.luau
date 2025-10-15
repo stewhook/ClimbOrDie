@@ -152,6 +152,79 @@ function module.createPlayerCache(player: Player)
 	clone.Parent = player
 end
 
+local function synchronizeItemCache(itemCache, profile)
+	for itemName, value in profile.Data.Inventory do
+		if not itemCache:FindFirstChild(itemName) then
+			local item = Instance.new("BoolValue")
+			item.Name = itemName
+			item.Parent = itemCache
+		end
+	end
+end
+
+local function synchronizeEquippedItem(itemCache, profile)
+	local equippedItem = profile.Data.EquippedItem
+	if equippedItem == nil then return end
+	for _, item in itemCache:GetChildren() do
+		if item.Name == equippedItem then
+			item.Value = true
+		else
+			item.Value = false
+		end
+	end
+end
+
+function module.createItemCache(player: Player)
+	local profile = module.verifyProfile(player)
+	if not profile then
+		return
+	end
+	local itemCache = ServerStorage.Data:FindFirstChild("ItemCache")
+	if not itemCache then
+		return
+	end
+
+	local clone = itemCache:Clone()
+	synchronizeItemCache(clone, profile)
+	synchronizeEquippedItem(clone, profile)
+	clone.Parent = player
+end
+
+function module.adjustInventory(player: Player, itemName: string, value)
+	local profile = module.verifyProfile(player)
+	if not profile then
+		return
+	end
+
+	local itemCache = player:FindFirstChild("ItemCache")
+	if not itemCache then
+		return
+	end
+
+	if value == true then
+		profile.Data.Inventory[itemName] = value
+	elseif value == false then
+		profile.Data.Inventory[itemName] = nil
+	end
+
+	synchronizeItemCache(itemCache, profile)
+end
+
+function module.equipItem(player: Player, itemName: string)
+	local profile = module.verifyProfile(player)
+	if not profile then
+		return
+	end
+
+	local itemCache = player:FindFirstChild("ItemCache")
+	if not itemCache then
+		return
+	end
+
+	profile.Data.EquippedItem = itemName
+	synchronizeEquippedItem(itemCache, profile)
+end
+
 function module.isFirstJoin(player: Player)
 	local profile = module.verifyProfile(player)
 	if not profile then

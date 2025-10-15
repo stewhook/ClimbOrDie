@@ -14,6 +14,10 @@ local function largeThree(player: Player)
 	ItemSpawnHandler.AddCustomSpawns(HitboxData.getHitboxesByType("LARGE"), 3, 0.15, player, false)
 end
 
+local function largeTen(player: Player)
+	ItemSpawnHandler.AddCustomSpawns(HitboxData.getHitboxesByType("LARGE"), 10, 0.15, player, false)
+end
+
 local function sendBomb(player: Player)
 	ItemSpawnHandler.AddCustomSpawns(HitboxData.getHitboxesByType("EXPLOSIVE"), 1, 0.15, player)
 end
@@ -22,6 +26,7 @@ local functionKey = {
 	Regular3 = spawnThree,
 	Regular5 = spawnFive,
 	Large3 = largeThree,
+	Large10 = largeTen,
 	Bomb1 = sendBomb,
 }
 local function handler(typeOf: string, player: Player)

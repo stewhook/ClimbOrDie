@@ -29,6 +29,7 @@ local function initialize(player: Player)
     DataManager.createLeaderstats(player)
     DataManager.createPlayerCache(player)
     DataManager.createSessionData(player)
+	DataManager.createItemCache(player)
     DataManager.updateSessionData(player, "JoinTime", os.time())
 	print(DataManager.Profiles[player].Data)
 end

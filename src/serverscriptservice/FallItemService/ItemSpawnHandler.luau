@@ -1,3 +1,5 @@
+local ServerScriptService = game:GetService("ServerScriptService")
+local DataManager = require(ServerScriptService.DataStore.DataManager)
 local HitboxData = require(script.Parent.HitboxData)
 local ServerItemFunctions = require(script.Parent.ServerItemFunctions)
 -- Get cached hitbox data from module
@@ -62,6 +64,9 @@ local function spawnHitbox(useCustomHitboxList, customHitboxes, customTotalWeigh
 	local spawnPoint = retrieveRandomSpawn()
 	if spawnPoint then
 		if useCustomHitboxList then
+			if sender then
+				DataManager.incrementValue(sender, "SentItems", 1)
+			end
 			clonedHitbox:SetAttribute("Custom", sender.UserId)
 		end
 
@@ -96,7 +101,11 @@ local function spawnLoop()
 			-- Spawn all items in this custom spawn batch
 			for i = 1, customSpawn.count do
 				spawnHitbox(true, customSpawn.hitboxes, customSpawn.totalWeight, customSpawn.sender)
-				spawnSystemState.currentSpawns = spawnSystemState.currentSpawns + 1
+
+				-- Only increment currentSpawns if this counts toward the limit
+				if customSpawn.increaseMaxSpawns then
+					spawnSystemState.currentSpawns = spawnSystemState.currentSpawns + 1
+				end
 
 				-- Wait between spawns if not the last one
 				if i < customSpawn.count then

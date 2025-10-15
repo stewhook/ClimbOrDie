@@ -17,6 +17,7 @@ local roundInfoFolder = ReplicatedStorage.RoundInfo
 local RoundBalancing = require(script.Parent.RoundBalancing)
 
 local roundEvents = ReplicatedStorage.Events.RoundManagement
+local playerEvents = ReplicatedStorage.Events.PlayerManagement
 local startIntermissionEvent: RemoteEvent = roundEvents.StartIntermission
 local startRoundEvent: RemoteEvent = roundEvents.StartRound
 local gameJoinEvent: RemoteEvent = roundEvents.GameJoin
@@ -191,6 +192,7 @@ end
 local function createDeathConnection(player: Player, humanoid: Humanoid)
 	local connection = humanoid.Died:Connect(function()
 		playerLeave(player)
+		player:SetAttribute("Died", Workspace:GetServerTimeNow())
 	end)
 	deathConnections[player] = connection
 end
@@ -208,6 +210,7 @@ local function grabCustomSpawn(roundNumber: number)
 	return nil
 end
 
+local activeSong = nil
 local function playerJoin(player: Player, customSpawn: boolean?)
 	customSpawn = customSpawn or false
 	if roundInfoFolder.GameActive.Value ~= true then
@@ -239,6 +242,9 @@ local function playerJoin(player: Player, customSpawn: boolean?)
 
 	local playerSpawn = nil
 	if customSpawn then
+		if activeSong then
+			playerEvents.PlaySongByIndex:FireClient(player, activeSong)
+		end
 		playerSpawn = grabCustomSpawn(roundInfoFolder.CurrentRound.Value)
 	else
 		playerSpawn = selectRandomSpawn(GameSettings.GAME_SPAWN_FOLDER)
@@ -356,7 +362,7 @@ local function startRound(roundNumber: number)
 	local setupData = {
 		SongChoice = math.random(1, #SoundService.InGame.RoundMusic:GetChildren()),
 	}
-
+	activeSong = setupData.SongChoice
 	for player, data in InGamePlayers do
 		startRoundEvent:FireClient(player, roundNumber, setupData)
 	end
@@ -374,6 +380,7 @@ end
 local function endRound(roundNumber: number)
 	print("Ending round " .. roundNumber)
 	roundInfoFolder.RoundActive.Value = false
+	activeSong = nil
 	startWarning()
 	solidifyBarrier(roundNumber - 1)
 	DoorHandler.OpenDoor(DoorHandler.DoorKey[roundNumber - 1], true)
@@ -522,12 +529,22 @@ joinActiveEvent.OnServerEvent:Connect(function(player: Player)
 		return
 	end
 	local profile = DataManager.verifyProfile(player)
-	if not profile then return end
+	if not profile then
+		return
+	end
 
 	if profile.Data.HasJoinActive == true then
 		DataManager.setValue(player, "HasJoinActive", false)
-		playerJoin(player, true)	
+		playerJoin(player, true)
 	end
+end)
+
+revivePlayerBind.Event:Connect(function(player: Player)
+	if roundInfoFolder.GameActive.Value ~= true then
+		return
+	end
+
+	playerJoin(player, true)
 end)
 
 while script.Parent do

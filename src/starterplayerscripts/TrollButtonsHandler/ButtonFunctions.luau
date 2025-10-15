@@ -11,6 +11,7 @@ local buttonPressEvent: RemoteEvent =
 	ReplicatedStorage:WaitForChild("Events"):WaitForChild("Lobby"):WaitForChild("ButtonPress")
 local buttonHighlight: Highlight =
 	ReplicatedStorage:WaitForChild("LobbyUtils"):WaitForChild("Highlights"):WaitForChild("ButtonHighlight")
+local devProductPrompt: RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("Marketplace"):WaitForChild("PromptProduct")
 
 local highlightTweenDetails = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 local function createHighlight(model: Model)
@@ -68,14 +69,19 @@ function module.connectButton(model: Model)
 		return
 	end
 
-	local buttonType = model:GetAttribute("Type")
-	if not buttonType then
-		return
-	end
-
-	print("Creating Event Triggers")
-
 	prompt.Triggered:Connect(function(player: Player)
+
+		local productID = model:GetAttribute("ProductID")
+		if productID then
+			devProductPrompt:FireServer(productID)
+			return
+		end
+
+		local buttonType = model:GetAttribute("Type")
+		if not buttonType then
+			return
+		end
+	
 		local lastUse = model:GetAttribute("LastUse")
 		if not lastUse then
 			return
