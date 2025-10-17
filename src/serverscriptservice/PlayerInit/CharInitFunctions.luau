@@ -63,9 +63,7 @@ function module.DetectFall(char: Model)
 
 	humanoid.StateChanged:Connect(function(_, newState)
 		if
-			newState == Enum.HumanoidStateType.Ragdoll
-			or newState == Enum.HumanoidStateType.FallingDown
-			or newState == Enum.HumanoidStateType.PlatformStanding
+			newState == Enum.HumanoidStateType.FallingDown
 		then
 			if not ragdolling then
 				ragdolling = true

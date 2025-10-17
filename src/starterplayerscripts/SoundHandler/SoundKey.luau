@@ -20,4 +20,6 @@ return {
 	CARDBOARDIMPACT = areaSounds.FallParts.CardboardImpact,
 	CERAMICIMPACT = areaSounds.FallParts.CeramicImpact,
 	ITEMEMERGENCYALERT = UISounds.Alerts.EmergencyItem,
+	INTERMISSIONSOUND = UISounds.Alerts.IntermissionCountdown,
+	LOBBYMUSIC = SoundService.Lobby.LobbyMusic.LobbyMusic,
 }

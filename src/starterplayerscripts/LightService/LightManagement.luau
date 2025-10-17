@@ -1,4 +1,3 @@
-local AccountService = game:GetService("AccountService")
 local StarterPlayer = game:GetService("StarterPlayer")
 local TweenService = game:GetService("TweenService")
 local BasicUtils = require(StarterPlayer.StarterPlayerScripts.BasicUtilities.BasicUtils)
@@ -41,9 +40,12 @@ local function resetLights()
 	if not lightTable then
 		return
 	end
+	for _, data in lightTable do
+		data.PointLight.Color = data.OriginalColor
+		data.SpotLight.Color = data.OriginalColor
+		data.Bulb.Color = data.OriginalColor
+	end
 end
-
-local function lightPulse() end
 
 local pulseTime = 1
 local warningColor = Color3.new(1, 0.4, 0.4)
@@ -88,13 +90,6 @@ local function stopWarning()
 		tweens:Cancel()
 		activeTweens[index] = nil
 	end
-
-	for _, data in lightTable do
-		data.PointLight.Color = data.OriginalColor
-		data.SpotLight.Color = data.OriginalColor
-		data.Base.Color = data.OriginalColor
-	end
-	print(activeTweens)
 end
 
 return {

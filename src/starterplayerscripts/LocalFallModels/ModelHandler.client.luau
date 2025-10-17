@@ -20,7 +20,7 @@ local function weldParts(part0, part1)
 	return weld
 end
 
-local function weldToModel(hitbox, model) end
+local function _weldToModel(hitbox, model) end
 
 local function buildModelAtHitbox(hitbox: Part, model)
 	if not hitbox then
@@ -40,7 +40,6 @@ local function buildModelAtHitbox(hitbox: Part, model)
 	if hitbox:GetAttribute("Function") then
 		clone:SetAttribute("Function", hitbox:GetAttribute("Function"))
 	end
-	clone.Parent = localModels
 
 	-- Determine target CFrame and the anchor part to weld to
 	local targetCFrame
@@ -85,8 +84,10 @@ local function buildModelAtHitbox(hitbox: Part, model)
 		end
 	else
 		warn("Unsupported model type:", clone.ClassName)
+		return
 	end
 
+	clone.Parent = localModels
 	modelIndex[hitbox] = clone
 end
 

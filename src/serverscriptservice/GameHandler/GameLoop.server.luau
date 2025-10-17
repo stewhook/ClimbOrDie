@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
+local BuildPlayerData = require(script.Parent.BuildPlayerData)
 local DataManager = require(ServerScriptService.DataStore.DataManager)
 local HitboxData = require(ServerScriptService.FallItemService.HitboxData)
 local ItemSpawnHandler = require(ServerScriptService.FallItemService.ItemSpawnHandler)
@@ -55,13 +56,41 @@ local function checkForMinimumPlayers()
 	end
 end
 
+local function getEquippedGear(player: Player)
+	local gearCache = player:FindFirstChild("ItemCache")
+	for _, obj in gearCache:GetChildren() do
+		if obj.Value == true then
+			return obj.Name
+		end
+	end
+	return nil
+end
+
 local function addPlayerData(player: Player)
-	local dataPayload = true -- change this later
-	InGamePlayers[player] = dataPayload
+	InGamePlayers[player] = BuildPlayerData.BuildData(player, getEquippedGear(player))
+	print(InGamePlayers)
 end
 
 local function removePlayerData(player: Player)
 	InGamePlayers[player] = nil
+end
+
+local function startGearFunctions(player: Player)
+	local gameData = InGamePlayers[player]
+	if not gameData then return end
+	local startFunction = gameData.StartFunction
+	if startFunction then
+		startFunction(player)
+	end
+end
+
+local function endGearFunctions(player: Player)
+	local gameData = InGamePlayers[player]
+	if not gameData then return end
+	local endFunction = gameData.EndFunction
+	if endFunction then
+		endFunction(player)
+	end
 end
 
 local function removeDeathConnections(player: Player)
@@ -180,6 +209,7 @@ local function playerLeave(player: Player)
 	removePlayerData(player)
 	removeDeathConnections(player)
 	removeHighlight(player)
+	endGearFunctions(player)
 	teleportToSpawn(player, selectRandomSpawn(GameSettings.LOBBY_SPAWN_FOLDER))
 	removeRoundUI(player)
 	removePlayerFromCache(player)
@@ -250,6 +280,7 @@ local function playerJoin(player: Player, customSpawn: boolean?)
 		playerSpawn = selectRandomSpawn(GameSettings.GAME_SPAWN_FOLDER)
 	end
 
+	startGearFunctions(player)
 	teleportToSpawn(player, playerSpawn)
 	addPlayerToCache(player)
 	createRoundUI(player)

@@ -20,5 +20,4 @@ function module.createSettingsCache(player: Player)
 	local profile = DataManager.verifyProfile(player)
 	settingsInitEvent:FireClient(player, profile.Data.Settings)
 end
-
 return module

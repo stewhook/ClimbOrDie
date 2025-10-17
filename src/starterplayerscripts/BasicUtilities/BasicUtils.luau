@@ -1,5 +1,7 @@
 local Players = game:GetService("Players")
+local StarterPlayer = game:GetService("StarterPlayer")
 local player = Players.LocalPlayer
+local GamepassCache = require(player.PlayerScripts.CacheHandler.GamepassCache.GamepassCache)
 local LocalGroupCache = require(player.PlayerScripts.GroupManagement.LocalGroupCache)
 
 local baseServerTime = workspace:GetServerTimeNow()
@@ -30,6 +32,13 @@ end
 
 function module.isInGroup()
 	return LocalGroupCache[player] and true or false
+end
+
+function module.ownsGamepass(gamepassID: number)
+	if not GamepassCache[gamepassID] then
+		return false
+	end
+	return GamepassCache[gamepassID].PlayerOwns
 end
 
 local function calcStroke()

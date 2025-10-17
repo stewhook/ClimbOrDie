@@ -15,14 +15,11 @@ if modelsFolder then
 			if id then
 				-- Use the ID as the key and the model as the value
 				modelDictionary[id] = model
-				print("Added model with ID:", id, "Name:", model.Name)
 			else
 				warn("Model", model.Name, "does not have an ID attribute")
 			end
 		end
 	end
-
-	print("Total models loaded:", #modelDictionary)
 else
 	warn("Models folder not found in ReplicatedStorage")
 end

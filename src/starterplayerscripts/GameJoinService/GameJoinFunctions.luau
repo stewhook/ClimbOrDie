@@ -37,15 +37,22 @@ function module.closeAlertListener()
 	connection = nil
 end
 
-function module.initGameUI()
+function module.clearLobbyUI()
 	local lobbyUI = playerGui:FindFirstChild("LobbyGui")
 	if lobbyUI then
 		lobbyUI:Destroy()
 	end
-	local roundUI = ReplicatedStorage.UIComponents.RoundUtils.RoundGui:Clone()
-	roundUI.Parent = playerGui
-	return playerGui	
 end
+
+-- function module.initGameUI()
+-- 	local lobbyUI = playerGui:FindFirstChild("LobbyGui")
+-- 	if lobbyUI then
+-- 		lobbyUI:Destroy()
+-- 	end
+-- 	local roundUI = ReplicatedStorage.UIComponents.RoundUtils.RoundGui:Clone()
+-- 	roundUI.Parent = playerGui
+-- 	return playerGui	
+-- end
 
 function module.initLobbyUI()
 	local roundUI = playerGui:FindFirstChild("RoundUI")

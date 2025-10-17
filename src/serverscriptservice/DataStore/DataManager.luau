@@ -164,7 +164,9 @@ end
 
 local function synchronizeEquippedItem(itemCache, profile)
 	local equippedItem = profile.Data.EquippedItem
-	if equippedItem == nil then return end
+	if equippedItem == nil then
+		return
+	end
 	for _, item in itemCache:GetChildren() do
 		if item.Name == equippedItem then
 			item.Value = true
@@ -223,6 +225,15 @@ function module.equipItem(player: Player, itemName: string)
 
 	profile.Data.EquippedItem = itemName
 	synchronizeEquippedItem(itemCache, profile)
+end
+
+function module.verifyItemOwnership(player: Player, itemName: string)
+	local profile = module.verifyProfile(player)
+	if not profile then
+		return
+	end
+
+	return profile.Data.Inventory[itemName] or false
 end
 
 function module.isFirstJoin(player: Player)

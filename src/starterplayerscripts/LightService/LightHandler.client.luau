@@ -9,5 +9,6 @@ local conn = warningSequence:GetPropertyChangedSignal("Value"):Connect(function(
         LightManagement.StartWarning()
     else
         LightManagement.StopWarning()
+        LightManagement.ResetLights()
     end
 end)

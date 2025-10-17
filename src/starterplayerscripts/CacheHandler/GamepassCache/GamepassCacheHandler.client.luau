@@ -26,7 +26,6 @@ local function initCache()
 			ProductInfo = data,
 			PlayerOwns = data2,
 		}
-
 		GamepassCache[ID] = payload
 	end
 end
