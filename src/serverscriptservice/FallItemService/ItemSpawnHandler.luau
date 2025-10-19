@@ -1,7 +1,7 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 local DataManager = require(ServerScriptService.DataStore.DataManager)
 local HitboxData = require(script.Parent.HitboxData)
-local ServerItemFunctions = require(script.Parent.ServerItemFunctions)
+local ItemFunctions = require(script.Parent.ItemFunctions)
 -- Get cached hitbox data from module
 local cachedHitboxes = HitboxData.getHitboxes()
 local cachedTotalWeight = HitboxData.getTotalWeight()
@@ -70,14 +70,14 @@ local function spawnHitbox(useCustomHitboxList, customHitboxes, customTotalWeigh
 			clonedHitbox:SetAttribute("Custom", sender.UserId)
 		end
 
-		if clonedHitbox:GetAttribute("Function") then
-			ServerItemFunctions.Handler(clonedHitbox, clonedHitbox:GetAttribute("Function"))
-		end
-
 		clonedHitbox.Transparency = 1
 		clonedHitbox.CollisionGroup = "FallPart"
 		clonedHitbox.Parent = workspace.FallingParts
 		clonedHitbox:PivotTo(spawnPoint.CFrame)
+
+		if clonedHitbox:GetAttribute("Function") then
+			task.spawn(ItemFunctions.Handler, clonedHitbox, clonedHitbox:GetAttribute("Function"))
+		end
 	else
 		warn("SpawnPoint not found in workspace")
 	end

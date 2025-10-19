@@ -11,7 +11,6 @@ local giveCoolBadgeEvent =
 
 local function retrieveBadgeList()
 	local t = {}
-	print(BadgeKey)
 	for _, ID in BadgeKey do
 		table.insert(t, ID)
 	end
@@ -37,7 +36,6 @@ local coolBadgeList = {
 local function giveStartingBadges()
 	for _, badgeID in ipairs(coolBadgeList) do
 		if BadgeFunctions.playerOwnsBadge(badgeID) then
-			print("Player Owns This Badge")
 			continue
 		end
 		return true
@@ -46,7 +44,6 @@ local function giveStartingBadges()
 end
 
 local sendEvent = giveStartingBadges()
-print(sendEvent)
 
 if sendEvent then
 	giveCoolBadgeEvent:FireServer()

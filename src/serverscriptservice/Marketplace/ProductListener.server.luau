@@ -19,7 +19,6 @@ local function processReceipt(receiptInfo)
 	end)
 
 	if success and result then
-		print(`Successfully processed purchase for {player.Name} - ProductId: {receiptInfo.ProductId}`)
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	else
 		warn(`Failed to process purchase for {player.Name} - ProductId: {receiptInfo.ProductId}`)

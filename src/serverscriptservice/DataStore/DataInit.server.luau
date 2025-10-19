@@ -31,7 +31,6 @@ local function initialize(player: Player)
     DataManager.createSessionData(player)
 	DataManager.createItemCache(player)
     DataManager.updateSessionData(player, "JoinTime", os.time())
-	print(DataManager.Profiles[player].Data)
 end
 
 -- Creates and stores profile

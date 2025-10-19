@@ -35,7 +35,6 @@ local function sendPricingData()
 	for ID, data in GamepassCache do
 		payload[ID] = data.ProductInfo.PriceInRobux
 	end
-    print(payload)
 	gamePassInitEvent:FireServer(payload)
 end
 

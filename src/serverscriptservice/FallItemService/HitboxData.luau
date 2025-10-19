@@ -8,7 +8,6 @@ local function initializeHitboxes()
 	local hitboxes = {}
 	local totalWeight = 0
 
-	print("Initializing hitbox system...")
 	for _, hitbox in pairs(hitboxFolder:GetChildren()) do
 		if hitbox:IsA("Model") or hitbox:IsA("Part") or hitbox:IsA("MeshPart") then
 			if hitbox:IsA("Model") then
@@ -31,7 +30,6 @@ local function initializeHitboxes()
 		end
 	end
 
-	print(string.format("Loaded %d hitboxes with total weight of %d", #hitboxes, totalWeight))
 	return hitboxes, totalWeight
 end
 

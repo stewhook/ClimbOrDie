@@ -15,7 +15,6 @@ modelFolder.ChildAdded:Connect(function(child: Instance)
 	end
 
 	if BasicUtils.IsInGame() == false then
-        print("Creating Highlight")
 		SoundHandler.PlayRandomUISound(SoundService.InGame.HitboxSpawnSounds)
 		CustomHitbox.CreateHighlight(child)
 	end

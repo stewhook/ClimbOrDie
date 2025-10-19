@@ -45,7 +45,6 @@ local function checkForMinimumPlayers()
 	local elligiblePlayers = 0
 	for _, player in Players:GetPlayers() do
 		if not isOptedOut(player) then
-			print("Player Elligible")
 			elligiblePlayers += 1
 		end
 	end
@@ -68,7 +67,6 @@ end
 
 local function addPlayerData(player: Player)
 	InGamePlayers[player] = BuildPlayerData.BuildData(player, getEquippedGear(player))
-	print(InGamePlayers)
 end
 
 local function removePlayerData(player: Player)
@@ -204,7 +202,6 @@ local function removePlayerFromCache(player: Player)
 end
 
 local function playerLeave(player: Player)
-	print("Player Leave Function Running")
 	gameLeaveEvent:FireClient(player)
 	removePlayerData(player)
 	removeDeathConnections(player)
@@ -332,7 +329,6 @@ local function startIntermission(countTime: number?)
 	roundInfoFolder.IntermissionTime.Value = GameSettings.INTERMISSION_TIME
 	startIntermissionEvent:FireAllClients()
 	while roundInfoFolder.IntermissionTime.Value > 0 do
-		print(roundInfoFolder.IntermissionTime.Value)
 		task.wait(1)
 		roundInfoFolder.IntermissionTime.Value -= 1
 	end
@@ -402,14 +398,12 @@ local function startRound(roundNumber: number)
 end
 
 local function startWarning()
-	print("Warning seequnce started.")
 	roundInfoFolder.WarningSequence.Value = true
 	task.wait(3)
 	roundInfoFolder.WarningSequence.Value = false
 end
 
 local function endRound(roundNumber: number)
-	print("Ending round " .. roundNumber)
 	roundInfoFolder.RoundActive.Value = false
 	activeSong = nil
 	startWarning()

@@ -28,7 +28,6 @@ local function startCooldown(frame: Frame, cooldown: number)
 end
 
 local function endCooldown(frame: Frame)
-	print("Ending cooldown for frame")
 	activeCooldowns[frame] = nil
 	-- Remove from active alerts tracking
 	local index = table.find(activeAlerts, frame)
