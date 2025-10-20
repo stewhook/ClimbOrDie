@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
+local GearBalancing = require(ReplicatedStorage.StaticData.Gear.GearBalancing)
 local BuildPlayerData = require(script.Parent.BuildPlayerData)
 local DataManager = require(ServerScriptService.DataStore.DataManager)
 local HitboxData = require(ServerScriptService.FallItemService.HitboxData)
@@ -75,7 +76,9 @@ end
 
 local function startGearFunctions(player: Player)
 	local gameData = InGamePlayers[player]
-	if not gameData then return end
+	if not gameData then
+		return
+	end
 	local startFunction = gameData.StartFunction
 	if startFunction then
 		startFunction(player)
@@ -84,7 +87,9 @@ end
 
 local function endGearFunctions(player: Player)
 	local gameData = InGamePlayers[player]
-	if not gameData then return end
+	if not gameData then
+		return
+	end
 	local endFunction = gameData.EndFunction
 	if endFunction then
 		endFunction(player)
@@ -202,14 +207,14 @@ local function removePlayerFromCache(player: Player)
 end
 
 local function playerLeave(player: Player)
-	gameLeaveEvent:FireClient(player)
-	removePlayerData(player)
+	gameLeaveEvent:FireClient(player, InGamePlayers[player])
 	removeDeathConnections(player)
 	removeHighlight(player)
 	endGearFunctions(player)
 	teleportToSpawn(player, selectRandomSpawn(GameSettings.LOBBY_SPAWN_FOLDER))
 	removeRoundUI(player)
 	removePlayerFromCache(player)
+	removePlayerData(player)
 	local sessionData = getSessionData(player)
 	if sessionData and sessionData:FindFirstChild("InGame") then
 		sessionData:FindFirstChild("InGame").Value = false
@@ -300,7 +305,17 @@ local function gatherPlayers()
 end
 
 local function giveReward(player: Player, roundNumber: number)
-	local coinAmount = RoundBalancing[roundNumber].CoinReward
+	local playerData = InGamePlayers[player]
+	if not playerData then
+		return
+	end
+	local coinAmount
+	if playerData.EquippedGear == "PiggyBank" then
+		coinAmount = math.round(RoundBalancing[roundNumber].CoinReward * GearBalancing.PiggyBank.MoneyMultiplier)
+	else
+		coinAmount = RoundBalancing[roundNumber].CoinReward
+	end
+	print(coinAmount)
 	DataManager.incrementValue(player, "Coins", coinAmount)
 
 	local char = player.Character

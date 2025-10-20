@@ -23,28 +23,29 @@ function UIAnimationLibrary.OnLoad.PlaySound(sound, volume)
 	clonedSound:Play()
 end
 
-function UIAnimationLibrary.ForceRun.FlyToBottom(item: Frame, deletePart: GuiBase, duration: number)
+function UIAnimationLibrary.ForceRun.FlyToBottom(item: Frame, deletePart, duration: number)
+	deletePart = deletePart or nil
 	duration = duration or 0.2
 	local flyAwayTweenDetails = TweenInfo.new(duration, Enum.EasingStyle.Back, Enum.EasingDirection.In)
 	local flyTween = TweenService:Create(item, flyAwayTweenDetails, { Position = UDim2.new(0.5, 0, 1, 0) })
 	flyTween:Play()
 	flyTween.Completed:Wait()
-	deletePart:Destroy()
+	if deletePart then
+		deletePart:Destroy()
+	end
 end
 
-function UIAnimationLibrary.OnClose.FlyToBottom(
-	item: Frame,
-	fireButton: GuiButton,
-	deletePart: GuiBase,
-	duration: number
-)
+function UIAnimationLibrary.OnClose.FlyToBottom(item: Frame, fireButton: GuiButton, deletePart, duration: number)
+	deletePart = deletePart or nil
 	duration = duration or 0.2
 	local flyAwayTweenDetails = TweenInfo.new(duration, Enum.EasingStyle.Back, Enum.EasingDirection.In)
 	local flyTween = TweenService:Create(item, flyAwayTweenDetails, { Position = UDim2.new(0.5, 0, 1, 0) })
 	fireButton.MouseButton1Click:Connect(function()
 		flyTween:Play()
 		flyTween.Completed:Wait()
-		deletePart:Destroy()
+		if deletePart then
+			deletePart:Destroy()
+		end
 	end)
 end
 

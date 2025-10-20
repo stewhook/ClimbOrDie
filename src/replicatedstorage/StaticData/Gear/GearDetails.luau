@@ -11,9 +11,9 @@ return {
 		Title = "X-Ray Vision",
 		Detail = "See the objects before they can see you.",
 	},
-	Balloon = {
+	GravityCoil = {
 		Price = 400,
-		Title = "Balloon",
+		Title = "Gravity Coil",
 		Detail = "Jump higher and float back down!",
 	},
 	PiggyBank = {

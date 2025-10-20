@@ -5,6 +5,7 @@ local DevProductKey = require(ReplicatedStorage.StaticData.DevProductKey)
 
 local bindableEvents = ReplicatedStorage.Events.BindableEvents
 local revivePlayerBind: BindableEvent = bindableEvents.RevivePlayer
+local revivePlayerEvent: RemoteEvent = ReplicatedStorage.Events.Marketplace.RevivePlayerEvent
 
 local module = {}
 
@@ -14,6 +15,7 @@ local productFunctions = {}
 -- Handler for Revive product
 productFunctions[DevProductKey.Revive] = function(player: Player)
 	revivePlayerBind:Fire(player)
+	revivePlayerEvent:FireClient(player, true)
 	return true
 end
 
