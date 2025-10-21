@@ -10,7 +10,6 @@ local function createHighlight(model: Instance)
 	local highlight = ReplicatedStorage:WaitForChild("LobbyUtils"):WaitForChild("Highlights"):WaitForChild("CustomHighlight"):Clone()
 	local tween: Tween = createTween(highlight)
 	highlight.Parent = model
-	print(highlight.Parent)
 	tween:Play()
 	tween.Completed:Wait()
 	highlight:Destroy()

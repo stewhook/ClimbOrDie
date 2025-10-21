@@ -8,5 +8,4 @@ settingsInitEvent.OnClientEvent:Connect(function(payload)
 	for name, value in payload do
 		Settings.Settings[name] = value
 	end
-	print(Settings)
 end)

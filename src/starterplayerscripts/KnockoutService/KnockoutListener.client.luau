@@ -1,15 +1,17 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GearEffect = require(script.Parent.GearEffect)
 
-local knockoutEvent: RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("PlayerManagement"):WaitForChild("PlayerKnockedOut")
-local getupEvent: RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("PlayerManagement"):WaitForChild("ForcePlayerGetup")
+local knockoutEvent: RemoteEvent =
+	ReplicatedStorage:WaitForChild("Events"):WaitForChild("PlayerManagement"):WaitForChild("PlayerKnockedOut")
+local getupEvent: RemoteEvent =
+	ReplicatedStorage:WaitForChild("Events"):WaitForChild("PlayerManagement"):WaitForChild("ForcePlayerGetup")
 
 local player = Players.LocalPlayer
 local humanoid
 
 -- Function to be called when player enters FallingDown state
 local function onFallingDown()
-	print("[CLIENT] Player has entered the FallingDown state!")
 	knockoutEvent:FireServer()
 end
 
@@ -23,12 +25,13 @@ local function setupHumanoidStateListener(character)
 
 	-- Connect to StateChanged event
 	humanoid.StateChanged:Connect(function(oldState, newState)
+		if humanoid.Health <= 0 then
+			return
+		end
 		if newState == Enum.HumanoidStateType.FallingDown then
 			onFallingDown()
 		end
 	end)
-
-	print("Humanoid state listener set up successfully")
 end
 
 -- Set up listener for current character if it exists
@@ -47,13 +50,21 @@ local function enableCooldown(humanoid: Humanoid)
 	humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
 end
 
-getupEvent.OnClientEvent:Connect(function()
+getupEvent.OnClientEvent:Connect(function(gearID)
+	gearID = gearID or nil
 	local char = player.Character
-	if not char then return end
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return end
+	if not char then
+		return
+	end
+	humanoid = char:FindFirstChildOfClass("Humanoid")
+	if not humanoid then
+		return
+	end
 
-	print("FORCEFULLY GETTING UP")
+	if gearID then
+		GearEffect.PlayEffect(gearID)
+	end
+
 	task.spawn(enableCooldown, humanoid)
 	humanoid.PlatformStand = false
 	humanoid.AutoRotate = true

@@ -3,6 +3,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
+local GearBalancing = require(ReplicatedStorage.StaticData.Gear.GearBalancing)
+local GearDetails = require(ReplicatedStorage.StaticData.Gear.GearDetails)
 local BuildPlayerData = require(script.Parent.BuildPlayerData)
 local DataManager = require(ServerScriptService.DataStore.DataManager)
 local HitboxData = require(ServerScriptService.FallItemService.HitboxData)
@@ -45,7 +47,6 @@ local function checkForMinimumPlayers()
 	local elligiblePlayers = 0
 	for _, player in Players:GetPlayers() do
 		if not isOptedOut(player) then
-			print("Player Elligible")
 			elligiblePlayers += 1
 		end
 	end
@@ -68,29 +69,80 @@ end
 
 local function addPlayerData(player: Player)
 	InGamePlayers[player] = BuildPlayerData.BuildData(player, getEquippedGear(player))
-	print(InGamePlayers)
 end
 
 local function removePlayerData(player: Player)
 	InGamePlayers[player] = nil
 end
 
+local function grabPlayerTag(hrp: BasePart)
+	return hrp:FindFirstChildOfClass("BillboardGui")
+end
+
+local function createGearImage(player: Player)
+	if not player then
+		return
+	end
+	local playerData = InGamePlayers[player]
+	if not playerData then
+		return
+	end
+	local equipped = playerData.EquippedGear
+	if not equipped then
+		return
+	end
+	local char = player.Character
+	if not char then
+		return
+	end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return
+	end
+	local tag = grabPlayerTag(hrp)
+	tag.BaseFrame.GearImageFrame.GearImage.Image = GearDetails[equipped].Image
+	tag.BaseFrame.GearImageFrame.Visible = true
+end
+
+local function removeGearImage(player: Player)
+	if not player then
+		return
+	end
+	local char = player.Character
+	if not char then
+		return
+	end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return
+	end
+	local tag = grabPlayerTag(hrp)
+	tag.BaseFrame.GearImageFrame.Visible = false
+	tag.BaseFrame.GearImageFrame.GearImage.Image = nil
+end
+
 local function startGearFunctions(player: Player)
 	local gameData = InGamePlayers[player]
-	if not gameData then return end
+	if not gameData then
+		return
+	end
 	local startFunction = gameData.StartFunction
 	if startFunction then
 		startFunction(player)
 	end
+	createGearImage(player)
 end
 
 local function endGearFunctions(player: Player)
 	local gameData = InGamePlayers[player]
-	if not gameData then return end
+	if not gameData then
+		return
+	end
 	local endFunction = gameData.EndFunction
 	if endFunction then
 		endFunction(player)
 	end
+	removeGearImage(player)
 end
 
 local function removeDeathConnections(player: Player)
@@ -204,15 +256,14 @@ local function removePlayerFromCache(player: Player)
 end
 
 local function playerLeave(player: Player)
-	print("Player Leave Function Running")
-	gameLeaveEvent:FireClient(player)
-	removePlayerData(player)
+	gameLeaveEvent:FireClient(player, InGamePlayers[player])
 	removeDeathConnections(player)
 	removeHighlight(player)
 	endGearFunctions(player)
 	teleportToSpawn(player, selectRandomSpawn(GameSettings.LOBBY_SPAWN_FOLDER))
 	removeRoundUI(player)
 	removePlayerFromCache(player)
+	removePlayerData(player)
 	local sessionData = getSessionData(player)
 	if sessionData and sessionData:FindFirstChild("InGame") then
 		sessionData:FindFirstChild("InGame").Value = false
@@ -303,7 +354,17 @@ local function gatherPlayers()
 end
 
 local function giveReward(player: Player, roundNumber: number)
-	local coinAmount = RoundBalancing[roundNumber].CoinReward
+	local playerData = InGamePlayers[player]
+	if not playerData then
+		return
+	end
+	local coinAmount
+	if playerData.EquippedGear == "PiggyBank" then
+		coinAmount = math.round(RoundBalancing[roundNumber].CoinReward * GearBalancing.PiggyBank.MoneyMultiplier)
+	else
+		coinAmount = RoundBalancing[roundNumber].CoinReward
+	end
+	print(coinAmount)
 	DataManager.incrementValue(player, "Coins", coinAmount)
 
 	local char = player.Character
@@ -332,7 +393,6 @@ local function startIntermission(countTime: number?)
 	roundInfoFolder.IntermissionTime.Value = GameSettings.INTERMISSION_TIME
 	startIntermissionEvent:FireAllClients()
 	while roundInfoFolder.IntermissionTime.Value > 0 do
-		print(roundInfoFolder.IntermissionTime.Value)
 		task.wait(1)
 		roundInfoFolder.IntermissionTime.Value -= 1
 	end
@@ -402,14 +462,12 @@ local function startRound(roundNumber: number)
 end
 
 local function startWarning()
-	print("Warning seequnce started.")
 	roundInfoFolder.WarningSequence.Value = true
 	task.wait(3)
 	roundInfoFolder.WarningSequence.Value = false
 end
 
 local function endRound(roundNumber: number)
-	print("Ending round " .. roundNumber)
 	roundInfoFolder.RoundActive.Value = false
 	activeSong = nil
 	startWarning()

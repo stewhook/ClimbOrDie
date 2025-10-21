@@ -38,8 +38,6 @@ local function onGamepassPurchase(player: Player, gamepassId: number)
 		return
 	end
 
-	print(player.Name .. " completed purchase for gamepass ID:", gamepassId)
-
 	-- Get the appropriate handler function
 	local handlerFunction = GamepassFunctions[gamepassId]
 	if handlerFunction then
@@ -73,5 +71,3 @@ local function promptPlayerGamepass(player: Player, gamepassId: number)
 
 	return success
 end
-
-print("GamepassPurchaseHandler initialized successfully")

@@ -20,10 +20,8 @@ local function giveTitleBadges(player: Player)
 	}
 	for _, ID in ipairs(orderedList) do
 		if BadgeFunctions.playerOwns(player, ID) then
-			print("player owns this badge sorry")
 			continue
 		end
-		print("Awarding badge to player.")
 		BadgeService:AwardBadge(player.UserId, ID)
 	end
 end

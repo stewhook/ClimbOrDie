@@ -14,6 +14,7 @@ return {
 	SOCCERIMPACT = areaSounds.FallParts.SoccerImpact,
 	METALPANG = areaSounds.FallParts.MetalPang,
 	KNOCKOUT = areaSounds.Character.KnockedOut,
+	ARMOURHIT = areaSounds.Character.ArmourHit,
 	PLAYERROUNDREWARD = areaSounds.InGame.PlayerReward,
 	ITEMFALLALERT = UISounds.Alerts.PartFallWarning,
 	WARNINGSEQUENCE = localGameSounds.SequenceSounds.WarningSequence,
@@ -22,4 +23,5 @@ return {
 	ITEMEMERGENCYALERT = UISounds.Alerts.EmergencyItem,
 	INTERMISSIONSOUND = UISounds.Alerts.IntermissionCountdown,
 	LOBBYMUSIC = SoundService.Lobby.LobbyMusic.LobbyMusic,
+	ITEMPURCHASE = UISounds.Actions.Other.ItemPurchase,
 }

@@ -143,7 +143,6 @@ end
 
 -- Additive bump; coalesces bursts automatically
 function Module.add(id: string, delta: number)
-	print("Add Running")
 	local c = controllers[id]
 	assert(c, ("add: unknown id '%s'"):format(id))
 	if delta ~= 0 then

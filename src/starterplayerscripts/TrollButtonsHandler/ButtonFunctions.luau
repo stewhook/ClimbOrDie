@@ -105,8 +105,6 @@ function module.connectButton(model: Model)
 				end
 			end
 			buttonPressEvent:FireServer(model, buttonType)
-		else
-			print("Cooldown")
 		end
 	end)
 
@@ -147,10 +145,8 @@ function module.promptDisplayHandler(model: Model)
 	model:GetAttributeChangedSignal("Active"):Connect(function()
 		local value = model:GetAttribute("Active")
 		if value == true then
-			print("Enabling Prompt")
 			prompt.Enabled = true
 		elseif value == false then
-			print("Disabling Prompt")
 			prompt.Enabled = false
 		end
 	end)

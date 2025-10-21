@@ -3,7 +3,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundKey = require(script.Parent.SoundKey)
 local function preloadSounds()
 	local soundFolder = {}
-	print(ReplicatedStorage:WaitForChild("Sounds"):GetDescendants())
 	for _, sound in ReplicatedStorage:WaitForChild("Sounds"):GetDescendants() do
 		if sound:IsA("Sound") then
 			table.insert(soundFolder, sound)

@@ -7,7 +7,6 @@ function module.PlaySound(item: Part)
 	if not soundID then
 		return
 	end
-	print("Playing Sound Function")
 	SoundHandler.PlaySoundAtPart(soundID, item)
 end
 

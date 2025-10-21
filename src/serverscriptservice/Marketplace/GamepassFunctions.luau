@@ -9,7 +9,6 @@ module[GamepassKeys.GoldenShield] = function(player: Player)
 end
 
 module[GamepassKeys.PushPlayers] = function(player: Player)
-    print("Push Player Gamepass Ran")
 end
 
 return module
