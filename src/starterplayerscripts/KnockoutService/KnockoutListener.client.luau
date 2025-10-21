@@ -43,6 +43,9 @@ end
 player.CharacterAdded:Connect(setupHumanoidStateListener)
 
 local function enableCooldown(humanoid: Humanoid)
+	if humanoid.Health <= 0 then
+		return
+	end
 	humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
 	humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
 	task.wait(1)

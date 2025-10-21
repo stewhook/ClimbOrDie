@@ -38,9 +38,12 @@ local mapFolder = workspace.Map
 local function isOptedOut(player)
 	local profile = DataManager.verifyProfile(player)
 	if not profile then
+		warn(`[GameLoop] isOptedOut: No profile for {player and player.Name or "nil player"}`)
 		return false
 	end
-	return profile.Data.OptedOut
+	local opted = profile.Data.OptedOut
+	print(`[GameLoop] isOptedOut: {player.Name} optedOut={opted}`)
+	return opted
 end
 
 local function checkForMinimumPlayers()
@@ -51,84 +54,119 @@ local function checkForMinimumPlayers()
 		end
 	end
 	if elligiblePlayers >= GameSettings.MINIMUM_PLAYERS then
+		print(`[GameLoop] checkForMinimumPlayers: {elligiblePlayers}>={GameSettings.MINIMUM_PLAYERS} => true`)
 		return true
 	else
+		print(`[GameLoop] checkForMinimumPlayers: {elligiblePlayers}<{GameSettings.MINIMUM_PLAYERS} => false`)
 		return false
 	end
 end
 
 local function getEquippedGear(player: Player)
 	local gearCache = player:FindFirstChild("ItemCache")
+	if not gearCache then
+		warn(`[GameLoop] getEquippedGear: ItemCache not found for {player.Name}`)
+		return nil
+	end
 	for _, obj in gearCache:GetChildren() do
 		if obj.Value == true then
+			print(`[GameLoop] getEquippedGear: {player.Name} equipped {obj.Name}`)
 			return obj.Name
 		end
 	end
+	print(`[GameLoop] getEquippedGear: {player.Name} has no equipped gear`)
 	return nil
 end
 
 local function addPlayerData(player: Player)
-	InGamePlayers[player] = BuildPlayerData.BuildData(player, getEquippedGear(player))
+	local equippedGear = getEquippedGear(player)
+	print(
+		`[GameLoop] Adding player data for {player.Name} (UserId: {player.UserId}) with gear: {equippedGear or "None"}`
+	)
+	InGamePlayers[player] = BuildPlayerData.BuildData(player, equippedGear)
 end
 
 local function removePlayerData(player: Player)
+	print(`[GameLoop] Removing player data for {player.Name} (UserId: {player.UserId})`)
 	InGamePlayers[player] = nil
 end
 
 local function grabPlayerTag(hrp: BasePart)
-	return hrp:FindFirstChildOfClass("BillboardGui")
+	local tag = hrp:FindFirstChildOfClass("BillboardGui")
+	if not tag then
+		warn("[GameLoop] grabPlayerTag: BillboardGui not found on HRP")
+	end
+	return tag
 end
 
 local function createGearImage(player: Player)
 	if not player then
+		warn("[GameLoop] createGearImage: player is nil")
 		return
 	end
 	local playerData = InGamePlayers[player]
 	if not playerData then
+		warn(`[GameLoop] createGearImage: No InGamePlayers data for {player.Name}`)
 		return
 	end
 	local equipped = playerData.EquippedGear
 	if not equipped then
+		print(`[GameLoop] createGearImage: {player.Name} has no equipped gear`)
 		return
 	end
 	local char = player.Character
 	if not char then
+		warn(`[GameLoop] createGearImage: {player.Name} has no character`)
 		return
 	end
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	if not hrp then
+		warn(`[GameLoop] createGearImage: {player.Name} has no HumanoidRootPart`)
 		return
 	end
 	local tag = grabPlayerTag(hrp)
+	if not tag then
+		return
+	end
 	tag.BaseFrame.GearImageFrame.GearImage.Image = GearDetails[equipped].Image
 	tag.BaseFrame.GearImageFrame.Visible = true
+	print(`[GameLoop] createGearImage: Set gear image for {player.Name} to {equipped}`)
 end
 
 local function removeGearImage(player: Player)
 	if not player then
+		warn("[GameLoop] removeGearImage: player is nil")
 		return
 	end
 	local char = player.Character
 	if not char then
+		warn(`[GameLoop] removeGearImage: {player.Name} has no character`)
 		return
 	end
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	if not hrp then
+		warn(`[GameLoop] removeGearImage: {player.Name} has no HumanoidRootPart`)
 		return
 	end
 	local tag = grabPlayerTag(hrp)
-	tag.BaseFrame.GearImageFrame.Visible = false
-	tag.BaseFrame.GearImageFrame.GearImage.Image = nil
+	if tag then
+		tag.BaseFrame.GearImageFrame.Visible = false
+		print(`[GameLoop] removeGearImage: Hid gear image for {player.Name}`)
+	end
 end
 
 local function startGearFunctions(player: Player)
 	local gameData = InGamePlayers[player]
 	if not gameData then
+		warn(`[GameLoop] startGearFunctions: No InGamePlayers data for {player.Name}`)
 		return
 	end
 	local startFunction = gameData.StartFunction
 	if startFunction then
+		print(`[GameLoop] startGearFunctions: Executing StartFunction for {player.Name}`)
 		startFunction(player)
+	else
+		print(`[GameLoop] startGearFunctions: No StartFunction for {player.Name}`)
 	end
 	createGearImage(player)
 end
@@ -136,70 +174,96 @@ end
 local function endGearFunctions(player: Player)
 	local gameData = InGamePlayers[player]
 	if not gameData then
+		warn(`[GameLoop] endGearFunctions: No InGamePlayers data for {player.Name}`)
 		return
 	end
 	local endFunction = gameData.EndFunction
 	if endFunction then
+		print(`[GameLoop] endGearFunctions: Executing EndFunction for {player.Name}`)
 		endFunction(player)
+	else
+		print(`[GameLoop] endGearFunctions: No EndFunction for {player.Name}`)
 	end
 	removeGearImage(player)
 end
 
 local function removeDeathConnections(player: Player)
-	deathConnections[player]:Disconnect()
-	deathConnections[player] = nil
+	if deathConnections[player] then
+		deathConnections[player]:Disconnect()
+		deathConnections[player] = nil
+	end
 end
 
 local function createRoundUI(player: Player)
 	if IndexUI[player] then
+		print(`[GameLoop] createRoundUI: UI already exists for {player.Name}`)
 		return
 	end
 	if not player then
+		warn("[GameLoop] createRoundUI: player is nil")
 		return
 	end
 	local playerGui = player.PlayerGui
 	if not playerGui then
+		warn(`[GameLoop] createRoundUI: {player.Name} has no PlayerGui`)
 		return
 	end
 	local roundUI = ReplicatedStorage.UIComponents.RoundUtils.RoundGui:Clone()
 	IndexUI[player] = roundUI
 	roundUI.Parent = playerGui
+	print(`[GameLoop] createRoundUI: Attached round UI to {player.Name}`)
 	return playerGui
 end
 
 local function removeRoundUI(player: Player)
 	if not player then
+		warn("[GameLoop] removeRoundUI: player is nil")
 		return
 	end
 	if not IndexUI[player] then
+		print(`[GameLoop] removeRoundUI: No UI to remove for {player.Name}`)
 		return
 	end
 	IndexUI[player]:Destroy()
 	IndexUI[player] = nil
+	print(`[GameLoop] removeRoundUI: Removed UI for {player.Name}`)
 end
 
 local function selectRandomSpawn(spawnFolder)
 	if not spawnFolder then
+		warn("[GameLoop] selectRandomSpawn: spawnFolder is nil")
 		return
 	end
 	local list = spawnFolder:GetChildren()
-	return list[math.random(1, #list)]
+	if #list == 0 then
+		warn("[GameLoop] selectRandomSpawn: spawnFolder has no children")
+		return nil
+	end
+	local chosen = list[math.random(1, #list)]
+	print(`[GameLoop] selectRandomSpawn: Chose spawn '{chosen.Name}' from folder '{spawnFolder.Name}'`)
+	return chosen
 end
 
 local function teleportToSpawn(player: Player, spawn: BasePart)
 	if not spawn then
+		warn(`[GameLoop] teleportToSpawn: spawn is nil for {player and player.Name or "nil player"}`)
 		return
 	end
 	local char = player.Character
 	if not char then
+		warn(`[GameLoop] teleportToSpawn: {player.Name} has no character`)
 		return
 	end
 	local humanoid = char:FindFirstChildOfClass("Humanoid")
 	local hrp: BasePart = char:FindFirstChild("HumanoidRootPart")
 	if not humanoid or not hrp or humanoid.Health <= 0 then
+		warn(
+			`[GameLoop] teleportToSpawn: Missing HRP/Humanoid or dead for {player.Name} (humanoid={humanoid ~= nil}, hrp={hrp ~= nil}, health={humanoid and humanoid.Health or "N/A"})`
+		)
 		return
 	end
 	hrp:PivotTo(spawn.CFrame)
+	print(`[GameLoop] teleportToSpawn: Teleported {player.Name} to {spawn.Name}`)
 end
 
 local function giveHighlight(player: Player)
@@ -207,25 +271,35 @@ local function giveHighlight(player: Player)
 
 	local char = player.Character
 	if not char then
+		warn(`[GameLoop] giveHighlight: {player.Name} has no character`)
 		return
 	end
 	local humanoid = char:FindFirstChildOfClass("Humanoid")
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	if not humanoid or not hrp or humanoid.Health <= 0 then
+		warn(`[GameLoop] giveHighlight: Missing HRP/Humanoid or dead for {player.Name}`)
 		return
 	end
 
 	local clone = highlight:Clone()
 	clone.Parent = char
+	print(`[GameLoop] giveHighlight: Added highlight to {player.Name}`)
 end
 
 local function removeHighlight(player: Player)
 	local char = player.Character
 	if not char then
+		warn(`[GameLoop] removeHighlight: {player.Name} has no character`)
 		return
 	end
 
-	char:FindFirstChildOfClass("Highlight"):Destroy()
+	local playerHighlight = char:FindFirstChildOfClass("Highlight")
+	if playerHighlight then
+		playerHighlight:Destroy()
+		print(`[GameLoop] removeHighlight: Removed highlight from {player.Name}`)
+	else
+		print(`[GameLoop] removeHighlight: No highlight to remove for {player.Name}`)
+	end
 end
 
 local function getSessionData(player: Player)
@@ -235,28 +309,43 @@ end
 local function addPlayerToCache(player: Player)
 	local cacheFolder = ReplicatedStorage.Caches.GamePlayers
 	if not player or not cacheFolder then
+		warn("[GameLoop] addPlayerToCache: player or cacheFolder is nil")
 		return
 	end
 	if cacheFolder:FindFirstChild(tostring(player.UserId)) then
+		print(`[GameLoop] addPlayerToCache: Entry already exists for {player.Name}`)
 		return cacheFolder:FindFirstChild(tostring(player.UserId))
 	end
 	local boolVal = Instance.new("BoolValue")
 	boolVal.Name = player.UserId
 	boolVal.Value = true
 	boolVal.Parent = cacheFolder
+	print(`[GameLoop] addPlayerToCache: Created cache entry for {player.Name}`)
 	return boolVal
 end
 
 local function removePlayerFromCache(player: Player)
 	local boolVal = ReplicatedStorage.Caches.GamePlayers:FindFirstChild(tostring(player.UserId))
 	if not boolVal then
+		print(`[GameLoop] removePlayerFromCache: No cache entry for {player.Name}`)
 		return
 	end
 	boolVal:Destroy()
+	print(`[GameLoop] removePlayerFromCache: Removed cache entry for {player.Name}`)
 end
 
 local function playerLeave(player: Player)
-	gameLeaveEvent:FireClient(player, InGamePlayers[player])
+	print(`[GameLoop] Player leaving game: {player.Name} (UserId: {player.UserId})`)
+	task.spawn(function()
+		local sendData = InGamePlayers[player]
+		if sendData.EndFunction then
+			sendData.EndFunction = nil
+		end
+		if sendData.StartFunction then
+			sendData.StartFunction = nil
+		end
+		gameLeaveEvent:FireClient(player, InGamePlayers[player])
+	end)
 	removeDeathConnections(player)
 	removeHighlight(player)
 	endGearFunctions(player)
@@ -268,12 +357,15 @@ local function playerLeave(player: Player)
 	if sessionData and sessionData:FindFirstChild("InGame") then
 		sessionData:FindFirstChild("InGame").Value = false
 	end
+	print(`[GameLoop] Player {player.Name} successfully left game`)
 end
 
 local function createDeathConnection(player: Player, humanoid: Humanoid)
 	local connection = humanoid.Died:Connect(function()
+		print(`[GameLoop] Player {player.Name} died, triggering playerLeave`)
 		playerLeave(player)
 		player:SetAttribute("Died", Workspace:GetServerTimeNow())
+		humanoid:ChangeState(Enum.HumanoidStateType.Dead)
 	end)
 	deathConnections[player] = connection
 end
@@ -294,40 +386,53 @@ end
 local activeSong = nil
 local function playerJoin(player: Player, customSpawn: boolean?)
 	customSpawn = customSpawn or false
+	print(`[GameLoop] Attempting to join player: {player.Name} (UserId: {player.UserId}), CustomSpawn: {customSpawn}`)
+
 	if roundInfoFolder.GameActive.Value ~= true then
+		print(`[GameLoop] Player {player.Name} join FAILED: Game not active`)
 		return
 	end
 
 	if not player then
+		print(`[GameLoop] Player join FAILED: Player is nil`)
 		return
 	end
 
-	if isOptedOut(player) then
+	if isOptedOut(player) and not customSpawn then
+		print(`[GameLoop] Player {player.Name} join FAILED: Player opted out`)
 		return
 	end
 
 	local char = player.Character
 	if not char then
+		print(`[GameLoop] Player {player.Name} join FAILED: No character`)
 		return
 	end
 	local humanoid = char:FindFirstChildOfClass("Humanoid")
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	if not hrp or not humanoid or humanoid.Health <= 0 then
+		print(
+			`[GameLoop] Player {player.Name} join FAILED: Missing humanoid/HRP or dead (Health: {humanoid and humanoid.Health or "N/A"})`
+		)
 		return
 	end
 
 	addPlayerData(player)
-	gameJoinEvent:FireClient(player, InGamePlayers[player])
+	task.spawn(function()
+		gameJoinEvent:FireClient(player, InGamePlayers[player])
+	end)
 	createDeathConnection(player, humanoid)
 	giveHighlight(player)
 
 	local playerSpawn = nil
 	if customSpawn then
+		print(`[GameLoop] Player {player.Name} joining with custom spawn (Round {roundInfoFolder.CurrentRound.Value})`)
 		if activeSong then
 			playerEvents.PlaySongByIndex:FireClient(player, activeSong)
 		end
 		playerSpawn = grabCustomSpawn(roundInfoFolder.CurrentRound.Value)
 	else
+		print(`[GameLoop] Player {player.Name} joining with regular spawn`)
 		playerSpawn = selectRandomSpawn(GameSettings.GAME_SPAWN_FOLDER)
 	end
 
@@ -340,6 +445,8 @@ local function playerJoin(player: Player, customSpawn: boolean?)
 	if sessionData and sessionData:FindFirstChild("InGame") then
 		sessionData:FindFirstChild("InGame").Value = true
 	end
+
+	print(`[GameLoop] Player {player.Name} successfully joined game`)
 end
 
 local function gatherPlayers()
@@ -350,6 +457,7 @@ local function gatherPlayers()
 		end
 		table.insert(playerList, player)
 	end
+	print(`[GameLoop] Gathered {#playerList} eligible players for game start`)
 	return playerList -- add functionality to detect when a player is opting out
 end
 
@@ -455,7 +563,9 @@ local function startRound(roundNumber: number)
 	}
 	activeSong = setupData.SongChoice
 	for player, data in InGamePlayers do
-		startRoundEvent:FireClient(player, roundNumber, setupData)
+		if InGamePlayers[player] then
+			startRoundEvent:FireClient(player, roundNumber, setupData)
+		end
 	end
 	ItemSpawnHandler.StartHitboxSpawnLoop(roundData.SpawnInterval, roundData.MaxItemSpawn, hitboxes, totalWeight)
 	task.wait(2)
@@ -494,11 +604,15 @@ local function cleanGame()
 end
 
 local function endGame()
+	print(`[GameLoop] Ending game`)
 	roundInfoFolder.GameActive.Value = false
+	local playerCount = 0
 	for player, data in InGamePlayers do
+		playerCount += 1
 		DataManager.incrementValue(player, "Wins", 1)
 		playerLeave(player)
 	end
+	print(`[GameLoop] Game ended, processed {playerCount} winning players`)
 	cleanGame() -- cleanup player data, remove any potential connections, final stop to ensure a clean slate, reset round info.
 end
 
@@ -541,11 +655,13 @@ local function initRoundInfo()
 end
 
 local function startGame(playerList)
+	print(`[GameLoop] Starting game with {#playerList} players`)
 	initRoundInfo()
 	roundInfoFolder.GameActive.Value = true
 	for _, player in playerList do
 		playerJoin(player)
 	end
+	print(`[GameLoop] Game start complete`)
 end
 
 local function checkToContinue()
@@ -554,7 +670,10 @@ local function checkToContinue()
 		index += 1
 	end
 
+	print(`[GameLoop] CheckToContinue: {index} players remaining in game`)
+
 	if index <= 0 then
+		print(`[GameLoop] No players remaining, ending game`)
 		endGame()
 		return false
 	else
@@ -614,22 +733,30 @@ local function startLoop()
 end
 
 joinActiveEvent.OnServerEvent:Connect(function(player: Player)
+	print(`[GameLoop] JoinActiveEvent received from {player.Name}`)
 	if roundInfoFolder.GameActive.Value ~= true then
+		print(`[GameLoop] JoinActive FAILED for {player.Name}: Game not active`)
 		return
 	end
 	local profile = DataManager.verifyProfile(player)
 	if not profile then
+		print(`[GameLoop] JoinActive FAILED for {player.Name}: No profile`)
 		return
 	end
 
 	if profile.Data.HasJoinActive == true then
+		print(`[GameLoop] JoinActive SUCCESS for {player.Name}: HasJoinActive is true`)
 		DataManager.setValue(player, "HasJoinActive", false)
 		playerJoin(player, true)
+	else
+		print(`[GameLoop] JoinActive SKIPPED for {player.Name}: HasJoinActive is false`)
 	end
 end)
 
 revivePlayerBind.Event:Connect(function(player: Player)
+	print(`[GameLoop] RevivePlayer event received for {player.Name}`)
 	if roundInfoFolder.GameActive.Value ~= true then
+		print(`[GameLoop] Revive FAILED for {player.Name}: Game not active`)
 		return
 	end
 
