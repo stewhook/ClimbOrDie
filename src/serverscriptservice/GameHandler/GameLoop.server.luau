@@ -4,6 +4,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
 local GearBalancing = require(ReplicatedStorage.StaticData.Gear.GearBalancing)
+local GearDetails = require(ReplicatedStorage.StaticData.Gear.GearDetails)
 local BuildPlayerData = require(script.Parent.BuildPlayerData)
 local DataManager = require(ServerScriptService.DataStore.DataManager)
 local HitboxData = require(ServerScriptService.FallItemService.HitboxData)
@@ -74,6 +75,52 @@ local function removePlayerData(player: Player)
 	InGamePlayers[player] = nil
 end
 
+local function grabPlayerTag(hrp: BasePart)
+	return hrp:FindFirstChildOfClass("BillboardGui")
+end
+
+local function createGearImage(player: Player)
+	if not player then
+		return
+	end
+	local playerData = InGamePlayers[player]
+	if not playerData then
+		return
+	end
+	local equipped = playerData.EquippedGear
+	if not equipped then
+		return
+	end
+	local char = player.Character
+	if not char then
+		return
+	end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return
+	end
+	local tag = grabPlayerTag(hrp)
+	tag.BaseFrame.GearImageFrame.GearImage.Image = GearDetails[equipped].Image
+	tag.BaseFrame.GearImageFrame.Visible = true
+end
+
+local function removeGearImage(player: Player)
+	if not player then
+		return
+	end
+	local char = player.Character
+	if not char then
+		return
+	end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return
+	end
+	local tag = grabPlayerTag(hrp)
+	tag.BaseFrame.GearImageFrame.Visible = false
+	tag.BaseFrame.GearImageFrame.GearImage.Image = nil
+end
+
 local function startGearFunctions(player: Player)
 	local gameData = InGamePlayers[player]
 	if not gameData then
@@ -83,6 +130,7 @@ local function startGearFunctions(player: Player)
 	if startFunction then
 		startFunction(player)
 	end
+	createGearImage(player)
 end
 
 local function endGearFunctions(player: Player)
@@ -94,6 +142,7 @@ local function endGearFunctions(player: Player)
 	if endFunction then
 		endFunction(player)
 	end
+	removeGearImage(player)
 end
 
 local function removeDeathConnections(player: Player)

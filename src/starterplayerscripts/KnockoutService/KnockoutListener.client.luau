@@ -25,6 +25,9 @@ local function setupHumanoidStateListener(character)
 
 	-- Connect to StateChanged event
 	humanoid.StateChanged:Connect(function(oldState, newState)
+		if humanoid.Health <= 0 then
+			return
+		end
 		if newState == Enum.HumanoidStateType.FallingDown then
 			onFallingDown()
 		end
@@ -53,7 +56,7 @@ getupEvent.OnClientEvent:Connect(function(gearID)
 	if not char then
 		return
 	end
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	humanoid = char:FindFirstChildOfClass("Humanoid")
 	if not humanoid then
 		return
 	end
