@@ -2,4 +2,10 @@
 
 ### A small, week long game project that experienced mild success. Project was scrapped within the month as the analytics were not up to par with standards.
 
+Game had an exciting hook, but quickly died off. The game was difficult to monetize, and retention + play-time was laughably low.
+```
+2,100 Plays In 1 Week.
+Peak ~70 Concurrent Players.
+```
+
 All code has been open-sourced, this project was built using: Rokit, Rojo, Wally, and ProfileStore.
